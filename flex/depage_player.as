@@ -6,9 +6,10 @@ package {
     // stage
     import flash.display.StageAlign;
     import flash.display.StageScaleMode;
+    import flash.display.StageDisplayState;
 
     // events
-    import flash.events.Event;
+    import flash.events.*;
 
     // for text
     import flash.text.TextField;
@@ -17,13 +18,31 @@ package {
     import flash.media.Video;
     import flash.net.NetConnection;
     import flash.net.NetStream;
+
+    // for sound
+    import flash.media.SoundTransform;
+    
+    // timer
+    import flash.utils.Timer;
     /* }}} */
 
     public class depage_player extends Sprite { 
         /* {{{ variables */
         private var debug:TextField;
-        private var video:Video;
+        private var src:String;
+
+        private var videoURL:String;
+        private var connection:NetConnection;
+        private var stream:NetStream;
+        private var videoSprite:Sprite;
+        private var video:Video = new Video();
+
+        private var isDblClick:Boolean;
+        private var dblClickTimer:Timer = new Timer(300, 1);
+
+        private var sndTrans:SoundTransform;
         /* }}} */
+
         /* {{{ constructor depage_player */
         public function depage_player():void {
             super();
@@ -31,22 +50,119 @@ package {
             stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 
+            stage.addEventListener(Event.ACTIVATE, resizeHandler);
             stage.addEventListener(Event.RESIZE, resizeHandler);
 
+            dblClickTimer.addEventListener("timer", videoClickReal);
+
             debug = new TextField();
-            debug.height = 100;
+            debug.height = 20;
             debug.width = 100;
 
             addChild(debug);
 
-            //video = new Video();
-
-            //addChild(video);
+            loadMedia("http://metultelet.local/projects/dp_player/lib/testmovie.flv");
         }
         /* }}} */
         /* {{{ resizeHandler */
         public function resizeHandler(event:Event):void {
             debug.text = stage.stageWidth + "/" + stage.stageHeight;
+            debug.x = 10;
+            debug.y = stage.stageHeight - debug.height;
+            debug.width = stage.stageWidth - 20;
+
+            if (video) {
+                video.width = stage.stageWidth;
+                video.height = stage.stageHeight - debug.height;
+            }
+        }
+        /* }}} */
+        /* {{{ loadMedia */
+        public function loadMedia(url:String):void {
+            loadVideo(url);
+        }
+        /* }}} */
+
+        /* {{{ loadVideo */
+        public function loadVideo(url:String):void {
+            videoURL = url;
+
+            connection = new NetConnection();
+            connection.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+            connection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+            connection.connect(null);
+        }
+        /* }}} */
+        /* {{{ netStatusHandler */
+        private function netStatusHandler(event:NetStatusEvent):void {
+            switch (event.info.code) {
+                case "NetConnection.Connect.Success":
+                    connectStream();
+                    break;
+                case "NetStream.Play.StreamNotFound":
+                    debug.text = "Unable to locate video: " + videoURL;
+                    break;
+            }
+        }
+        /* }}} */
+        /* {{{ connectStream */
+        private function connectStream():void {
+            stream = new NetStream(connection);
+
+            stream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+            stream.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
+
+            sndTrans = new SoundTransform();
+            //mute
+            sndTrans.volume = 0;
+            soundTransform = sndTrans;
+
+            video.attachNetStream(stream);
+            stream.play(videoURL);
+
+            videoSprite = new Sprite();
+            addChild(videoSprite);
+
+            videoSprite.addChild(video);
+            videoSprite.useHandCursor = true;
+
+            videoSprite.doubleClickEnabled = true;
+            videoSprite.addEventListener(MouseEvent.CLICK, videoClick);
+            videoSprite.addEventListener(MouseEvent.DOUBLE_CLICK, videoDoubleClick);
+        }
+        /* }}} */
+        /* {{{ videoClick */
+        private function videoClick(event:MouseEvent):void {
+            isDblClick = false;
+            dblClickTimer.start();
+        }
+        /* }}} */
+        /* {{{ videoClickReal */
+        private function videoClickReal(event:TimerEvent):void {
+            if (!isDblClick) {
+                stream.togglePause();
+            }
+        }
+        /* }}} */
+        /* {{{ videoDoubleClick */
+        private function videoDoubleClick(event:MouseEvent):void {
+            isDblClick = true;
+
+            if (stage.displayState == StageDisplayState.NORMAL) { 
+                stage.displayState = StageDisplayState.FULL_SCREEN;
+            } else {
+                stage.displayState = StageDisplayState.NORMAL;
+            }
+        }
+        /* }}} */
+        /* {{{ securityErrorHandler */
+        private function securityErrorHandler(event:SecurityErrorEvent):void {
+            debug.text = "securityErrorHandler: " + event;
+        }
+        /* }}} */
+        /* {{{ asyncErrorHandler */
+        private function asyncErrorHandler(event:AsyncErrorEvent):void {
+            // ignore
         }
         /* }}} */
     } 
