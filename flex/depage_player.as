@@ -24,6 +24,9 @@ package {
     
     // timer
     import flash.utils.Timer;
+
+    // external
+    import flash.external.ExternalInterface;
     /* }}} */
 
     public class depage_player extends Sprite { 
@@ -43,6 +46,7 @@ package {
         private var sndTrans:SoundTransform;
         /* }}} */
 
+        //basic
         /* {{{ constructor depage_player */
         public function depage_player():void {
             super();
@@ -50,8 +54,9 @@ package {
             stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 
-            stage.addEventListener(Event.ACTIVATE, resizeHandler);
+            stage.addEventListener(Event.ADDED, resizeHandler);
             stage.addEventListener(Event.RESIZE, resizeHandler);
+            stage.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
 
             dblClickTimer.addEventListener("timer", videoClickReal);
 
@@ -61,7 +66,12 @@ package {
 
             addChild(debug);
 
-            loadMedia("http://metultelet.local/projects/dp_player/lib/testmovie.flv");
+            if (ExternalInterface.available) {
+                ExternalInterface.addCallback("loadMedia", loadMedia);
+                ExternalInterface.addCallback("togglePause", togglePause);
+            }
+
+            loadMedia("http://metultelet.local/projects/dp_player/lib/testmovie.mp4");
         }
         /* }}} */
         /* {{{ resizeHandler */
@@ -73,7 +83,7 @@ package {
 
             if (video) {
                 video.width = stage.stageWidth;
-                video.height = stage.stageHeight - debug.height;
+                video.height = stage.stageHeight;
             }
         }
         /* }}} */
@@ -83,6 +93,22 @@ package {
         }
         /* }}} */
 
+        //key handler
+        /* {{{ keyHandler */
+        public function keyHandler(event:KeyboardEvent):void {
+            debug.text = "key: " + event.charCode;
+            switch (event.charCode) {
+                case 102: // f
+                    toggleFullscreen();
+                    break;
+                case 32: // SPACE
+                    togglePause();
+                    break;
+            }
+        }
+        /* }}} */
+
+        //video
         /* {{{ loadVideo */
         public function loadVideo(url:String):void {
             videoURL = url;
@@ -93,6 +119,21 @@ package {
             connection.connect(null);
         }
         /* }}} */
+        /* {{{ toggleFullscreen */
+        private function toggleFullscreen():void {
+            if (stage.displayState == StageDisplayState.NORMAL) { 
+                stage.displayState = StageDisplayState.FULL_SCREEN;
+            } else {
+                stage.displayState = StageDisplayState.NORMAL;
+            }
+        }
+        /* }}} */
+        /* {{{ togglePause */
+        private function togglePause():void {
+            stream.togglePause();
+        }
+        /* }}} */
+
         /* {{{ netStatusHandler */
         private function netStatusHandler(event:NetStatusEvent):void {
             switch (event.info.code) {
@@ -122,6 +163,7 @@ package {
 
             videoSprite = new Sprite();
             addChild(videoSprite);
+            swapChildren(debug, videoSprite);
 
             videoSprite.addChild(video);
             videoSprite.useHandCursor = true;
@@ -140,7 +182,7 @@ package {
         /* {{{ videoClickReal */
         private function videoClickReal(event:TimerEvent):void {
             if (!isDblClick) {
-                stream.togglePause();
+                togglePause();
             }
         }
         /* }}} */
@@ -148,11 +190,7 @@ package {
         private function videoDoubleClick(event:MouseEvent):void {
             isDblClick = true;
 
-            if (stage.displayState == StageDisplayState.NORMAL) { 
-                stage.displayState = StageDisplayState.FULL_SCREEN;
-            } else {
-                stage.displayState = StageDisplayState.NORMAL;
-            }
+            toggleFullscreen();
         }
         /* }}} */
         /* {{{ securityErrorHandler */
