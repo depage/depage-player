@@ -34,14 +34,18 @@ package {
         private var debug:TextField;
         private var src:String;
 
+        private var paused:Boolean = true;
         private var videoURL:String;
         private var connection:NetConnection;
         private var stream:NetStream;
         private var videoSprite:Sprite;
         private var video:Video = new Video();
+        private var playerId:String;
 
         private var isDblClick:Boolean;
         private var dblClickTimer:Timer = new Timer(300, 1);
+
+        private var vidTimer:Timer = new Timer(250);
 
         private var sndTrans:SoundTransform;
         /* }}} */
@@ -67,11 +71,13 @@ package {
             addChild(debug);
 
             if (ExternalInterface.available) {
-                ExternalInterface.addCallback("loadMedia", loadMedia);
+                ExternalInterface.addCallback("setId", setId);
+                ExternalInterface.addCallback("load", load);
                 ExternalInterface.addCallback("togglePause", togglePause);
+                ExternalInterface.addCallback("play", play);
+                ExternalInterface.addCallback("pause", pause);
+                ExternalInterface.addCallback("seek", seek);
             }
-
-            loadMedia("http://metultelet.local/projects/dp_player/lib/testmovie.mp4");
         }
         /* }}} */
         /* {{{ resizeHandler */
@@ -87,9 +93,14 @@ package {
             }
         }
         /* }}} */
-        /* {{{ loadMedia */
-        public function loadMedia(url:String):void {
+        /* {{{ load*/
+        public function load(url:String):void {
             loadVideo(url);
+        }
+        /* }}} */
+        /* {{{ setId*/
+        public function setId(id:String):void {
+            playerId = id;
         }
         /* }}} */
 
@@ -130,7 +141,40 @@ package {
         /* }}} */
         /* {{{ togglePause */
         private function togglePause():void {
-            stream.togglePause();
+            if (paused) {
+                play();
+            } else {
+                pause();
+            }
+        }
+        /* }}} */
+        /* {{{ play */
+        private function play():void {
+            vidTimer.start();
+            paused = false;
+            setJSvar("paused", paused);
+            stream.resume();
+        }
+        /* }}} */
+        /* {{{ pause */
+        private function pause():void {
+            vidTimer.stop();
+            paused = true;
+            setJSvar("paused", paused);
+            stream.pause();
+        }
+        /* }}} */
+        /* {{{ seek */
+        private function seek(offset:Number):void {
+            stream.seek(offset);
+            setJSvar("currentTime", stream.time);
+        }
+        /* }}} */
+        /* {{{ setJSvar */
+        private function setJSvar(name:String, value:*):void {
+            if (ExternalInterface.available) {
+                ExternalInterface.call("setPlayerVar", playerId, name, value);
+            }
         }
         /* }}} */
 
@@ -160,6 +204,11 @@ package {
 
             video.attachNetStream(stream);
             stream.play(videoURL);
+            paused = false;
+            setJSvar("paused", paused);
+
+            vidTimer.start();
+            vidTimer.addEventListener(TimerEvent.TIMER, updateTime);
 
             videoSprite = new Sprite();
             addChild(videoSprite);
@@ -191,6 +240,11 @@ package {
             isDblClick = true;
 
             toggleFullscreen();
+        }
+        /* }}} */
+        /* {{{ updateTime */
+        private function updateTime(event:TimerEvent):void {
+            setJSvar("currentTime", stream.time);
         }
         /* }}} */
         /* {{{ securityErrorHandler */

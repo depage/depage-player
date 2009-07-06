@@ -142,12 +142,13 @@ function replaceEmailRefs() {
 // }}}
 // {{{ replaceFlashContent()
 function replaceFlashContent() {
+    /* {{{ replace flash images */
     $("img.flash_repl").each(function() {
 	var parent = $(this).parent().prepend( 
 	    $().flash({
 		src:		this.src.replace(/\.jpg|\.gif|\.png/, ".swf").replace(/\&/, "&amp;"),
-		width:		this.width,
-		height:		this.height,
+		width:		$(this).width(),
+		height:		$(this).height(),
 		className:	"flash",
 		id:		this.id ? this.id + "_flash" : null,
 		transparent:    $(this).hasClass("trans")
@@ -158,28 +159,141 @@ function replaceFlashContent() {
 	    parent[0].href = "javascript:return false;";
 	}
     });
+    /* }}} */
+    /* {{{ replace flash videos */
+    var vidIdCount = 0;
 
-    $("video").each(function() {
-        var videoID = this.id ? this.id + "_flash" : "video_flash";
+    $(".video").each(function() {
+        var videoDiv = this;
+        var videoURL = $("<a href=\"" + $("a", this).attr("href") + "\"></a>")[0].toString();
+        var playerId = "dp_player_" + vidIdCount++;
+        var player;
 
-	var parent = $(this).parent().prepend( 
-	    $().flash({
-		src:		"lib/depage_player.swf",
-		width:		320,
-		height:		240,
-		className:	"video",
-		id:		videoID,
-		transparent:    $(this).hasClass("trans")
-	    })
-	);
-        $("<a href=\"#\">play/pause</a>").appendTo(parent).click( function() {
-            $("#" + videoID)[0].togglePause();
+        // {{{ click on placeholder
+        $("a", videoDiv).click(function() {
+            insertPlayer();
+
+            return false;
         });
-        $("<a href=\"#\">fullscreen</a>").appendTo(parent).click( function() {
-            $("#" + videoID)[0].focus();
-            $("#" + videoID)[0].toggleFullscreen();
+        // }}}
+        // {{{ floatToTime
+        function floatToTime(value) {
+            var min = Math.floor(value / 60);
+            var sec = Math.floor(value) % 60; 
+            if (min < 10) {
+                min = "0" + min;
+            }
+            if (sec < 10) {
+                sec = "0" + sec;
+            }
+            return min + ":" + sec;
+        }
+        // }}}
+        // {{{ insertPlayer()
+        function insertPlayer() {
+            player = $().flash({
+                src:		"lib/depage_player.swf",
+                width:		$(videoDiv).width(),
+                height:		$(videoDiv).height(),
+                id:                 playerId
+            }).prependTo(videoDiv)[0];
+
+            $("a", videoDiv).hide();
+
+            // {{{ inititalize dummy function until flash player is loaded
+            var apifuncs = ["setId", "load", "play", "pause", "seek"];
+            
+            for (var i = 0; i < apifuncs.length; i++) {
+                player[apifuncs[i]] = function(func) {
+                    return function() {
+                        var args = arguments;
+
+                        setTimeout(function() {
+                            var code = "";
+
+                            code += "player[func](";
+                            for (j = 0; j < args.length; j++) {
+                                if (j > 0) {
+                                    code += ",";
+                                }
+                                code += "args[" + j + "]";
+                            }
+                            code += ");";
+
+                            eval(code);
+                        }, 300);
+                    }
+                }(apifuncs[i]);
+            }
+            // }}}
+            // {{{ setPlayerVar
+            window.setPlayerVar = function(playerId, name, value) {
+                var player = $("#" + playerId)[0];
+                var videoDiv = $("#" + playerId).parent()[0];
+
+                player[name] = value;
+
+                // {{{ paused
+                if (name == "paused") {
+                    if (player.paused) {
+                        $(".play", videoDiv).show();
+                        $(".pause", videoDiv).hide();
+                        $(".rewind", videoDiv).show();
+                    } else {
+                        $(".play", videoDiv).hide();
+                        $(".pause", videoDiv).show();
+                        $(".rewind", videoDiv).show();
+                    }
+                // }}}
+                // {{{ currentTime
+                } else if (name == "currentTime") {
+                    $(".current", videoDiv).html(floatToTime(player.currentTime) + "/");
+                    $(".progress .position", videoDiv).width(player.currentTime / duration * 100 + "%");
+                // }}}
+                // {{{ duration
+                } else if (name == "duration") {
+                    $(".duration", videoDiv).html(floatToTime(player.duration));
+                }
+                // }}}
+            }
+            /* }}} */
+
+            player.setId(playerId);
+            player.load(videoURL);
+        }
+        // }}}
+        // {{{ add controls
+        var duration = $("a", videoDiv).attr("data-video-duration");
+        var size = $("a", videoDiv).attr("data-video-size");
+
+        var controls = $("<div class=\"controls\"></div>").appendTo(videoDiv);
+        $("<a href=\"#\" class=\"play\">play</a>").appendTo(controls).click( function() {
+            try {
+                player.play();
+            } catch(e) {
+                insertPlayer();
+            }
         });
-    }).remove();
+        $("<a href=\"#\" class=\"pause\" style=\"display: none\">pause</a>").appendTo(controls).click( function() {
+            player.pause();
+        });
+        $("<a href=\"#\" class=\"rewind\">rewind</a>").appendTo(controls).click( function() {
+            player.seek(0);
+        });
+        $("<span class=\"progress\"><span class=\"position\"></span><span class=\"buffer\"></span></span>").appendTo(controls).mouseup( function(e) {
+            var offset = (e.pageX - $(this).offset().left) / $(this).width() * duration;
+
+            player.seek(offset);
+        });
+        $("<span class=\"time\"><span class=\"current\"></span><span class=\"duration\">" + floatToTime(duration) + "</span></span>").appendTo(controls);
+        // }}}
+
+        // call autoload/-start
+        if ($(this).hasClass("autostart")) {
+            insertPlayer();
+        }
+    });
+    /* }}} */
 }
 // }}}
 // {{{ replaceInteractiveContent()
