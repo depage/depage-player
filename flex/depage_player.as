@@ -82,14 +82,32 @@ package {
         /* }}} */
         /* {{{ resizeHandler */
         public function resizeHandler(event:Event):void {
-            debug.text = stage.stageWidth + "/" + stage.stageHeight;
+            onResize();
+        }
+        /* }}} */
+        /* {{{ onResize */
+        public function onResize():void {
             debug.x = 10;
             debug.y = stage.stageHeight - debug.height;
             debug.width = stage.stageWidth - 20;
 
             if (video) {
-                video.width = stage.stageWidth;
-                video.height = stage.stageHeight;
+                if (video.videoWidth / video.videoHeight < stage.stageWidth / stage.stageHeight) {
+                    video.width = (video.videoWidth / video.videoHeight) * stage.stageHeight;
+                    video.height = stage.stageHeight;
+
+                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " smaller";
+                } else if (video.videoWidth / video.videoHeight > stage.stageWidth / stage.stageHeight) {
+                    video.width = stage.stageWidth;
+                    video.height = stage.stageWidth * (video.videoHeight / video.videoWidth);
+
+                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " bigger";
+                } else {
+                    video.width = stage.stageWidth;
+                    video.height = stage.stageHeight;
+
+                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
+                }
             }
         }
         /* }}} */
@@ -244,6 +262,9 @@ package {
         /* }}} */
         /* {{{ updateTime */
         private function updateTime(event:TimerEvent):void {
+            /* this is a hack - find the time when the video size is correct */
+            onResize();
+
             setJSvar("currentTime", stream.time);
         }
         /* }}} */

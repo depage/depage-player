@@ -267,17 +267,17 @@ function replaceFlashContent() {
         var size = $("a", videoDiv).attr("data-video-size");
 
         var controls = $("<div class=\"controls\"></div>").appendTo(videoDiv);
-        $("<a href=\"#\" class=\"play\">play</a>").appendTo(controls).click( function() {
+        $("<a class=\"play\">play</a>").appendTo(controls).click( function() {
             try {
                 player.play();
             } catch(e) {
                 insertPlayer();
             }
         });
-        $("<a href=\"#\" class=\"pause\" style=\"display: none\">pause</a>").appendTo(controls).click( function() {
+        $("<a class=\"pause\" style=\"display: none\">pause</a>").appendTo(controls).click( function() {
             player.pause();
         });
-        $("<a href=\"#\" class=\"rewind\">rewind</a>").appendTo(controls).click( function() {
+        $("<a class=\"rewind\">rewind</a>").appendTo(controls).click( function() {
             player.seek(0);
         });
         $("<span class=\"progress\"><span class=\"position\"></span><span class=\"buffer\"></span></span>").appendTo(controls).mouseup( function(e) {
