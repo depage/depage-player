@@ -2,6 +2,7 @@ package {
     /* {{{ imports */
     // basic
     import flash.display.Sprite;
+    import flash.display.Shape;
 
     // stage
     import flash.display.StageAlign;
@@ -32,6 +33,7 @@ package {
     public class depage_player extends Sprite { 
         /* {{{ variables */
         private var debug:TextField;
+        private var back:Shape;
         private var src:String;
 
         private var paused:Boolean = true;
@@ -63,6 +65,14 @@ package {
             stage.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
 
             dblClickTimer.addEventListener("timer", videoClickReal);
+
+            back = new Shape();
+
+            back.graphics.beginFill(0x000000);
+            back.graphics.drawRect(0, 0, 1000, 1000);
+            back.graphics.endFill();
+
+            addChild(back);
 
             debug = new TextField();
             debug.height = 20;
@@ -108,7 +118,10 @@ package {
 
                     debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
                 }
+                video.y = (stage.stageHeight - video.height) / 2;
             }
+            back.width = stage.stageWidth;
+            back.height = stage.stageHeight;
         }
         /* }}} */
         /* {{{ load*/

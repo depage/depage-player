@@ -1,0 +1,76 @@
+* {
+    margin: 0;
+}
+body {
+    font-size: 62.5%;
+    width: 100%;
+    height: 100%;
+}
+.video {
+    width: 72em;
+    position: relative;
+}
+.video img,
+.video object {
+    display: block;
+    width: 100%;
+    /*height: 36em;*/
+    border: none;
+}
+.video .controls {
+    position: relative;
+    background: #eeeeee;
+    height: 3em;
+    line-height: 3em;
+}
+.video .indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    background: url("../lib/play_indicator.png") center center no-repeat;
+}
+.video .controls .play,
+.video .controls .pause,
+.video .controls .rewind,
+.video .controls .time {
+    display: block;
+    position: absolute;
+    top: 0;
+}
+.video .controls .play,
+.video .controls .pause {
+    left: 0;
+}
+.video .controls .rewind {
+    left: 2em;
+}
+.video .controls .progress {
+    position: absolute;
+    display: block;
+    height: 1em;
+    top: 1em;
+    left: 5em;
+    width: 70%;
+    border: 1px solid #ffffff;
+    cursor: pointer;
+}
+.video .controls .progress span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+.video .controls .progress .position {
+    /*background: #aaaaaa;*/
+    border-right: 3px solid #ffffff;
+}
+.video .controls .progress .buffer {
+}
+.video .controls .time {
+    right: 0;
+}
+.video .controls .time span {
+    font-size: 1.5em;
+}

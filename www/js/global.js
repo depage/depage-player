@@ -165,6 +165,7 @@ function replaceFlashContent() {
 
     $(".video").each(function() {
         var videoDiv = this;
+        var placeholder = $("a img", this);
         var videoURL = $("<a href=\"" + $("a", this).attr("href") + "\"></a>")[0].toString();
         var playerId = "dp_player_" + vidIdCount++;
         var player;
@@ -193,9 +194,9 @@ function replaceFlashContent() {
         function insertPlayer() {
             player = $().flash({
                 src:		"lib/depage_player.swf",
-                width:		$(videoDiv).width(),
-                height:		$(videoDiv).height(),
-                id:                 playerId
+                width:		placeholder.width(),
+                height:		placeholder.height(),
+                id:             playerId
             }).prependTo(videoDiv)[0];
 
             $("a", videoDiv).hide();
