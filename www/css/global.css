@@ -10,6 +10,9 @@ body {
     width: 72em;
     position: relative;
 }
+.video div.wrapper {
+    position: relative;
+}
 .video img,
 .video object {
     display: block;
@@ -17,9 +20,16 @@ body {
     /*height: 36em;*/
     border: none;
 }
+.video object {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 1000;
+}
 .video .controls {
     position: relative;
-    background: #eeeeee;
+    background: #cccccc;
     height: 3em;
     line-height: 3em;
 }
@@ -27,6 +37,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 999;
     width: 100%;
     height: 90%;
     background: url("../lib/play_indicator.png") center center no-repeat;

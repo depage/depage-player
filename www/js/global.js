@@ -165,6 +165,9 @@ function replaceFlashContent() {
 
     $(".video").each(function() {
         var videoDiv = this;
+
+        $(videoDiv).wrapInner("<div class=\"wrapper\"></div>");
+
         var placeholder = $("a img", this);
         var videoURL = $("<a href=\"" + $("a", this).attr("href") + "\"></a>")[0].toString();
         var playerId = "dp_player_" + vidIdCount++;
@@ -193,16 +196,17 @@ function replaceFlashContent() {
         // {{{ insertPlayer()
         function insertPlayer() {
             player = $().flash({
-                src:		"lib/depage_player.swf",
+                src:		scriptPath + "../lib/depage_player.swf",
                 width:		placeholder.width(),
                 height:		placeholder.height(),
-                id:             playerId
-            }).prependTo(videoDiv)[0];
-
-            $("a", videoDiv).hide();
+                id:             playerId,
+                params: {
+                    id: playerId
+                }
+            }).prependTo($("div:first", videoDiv))[0];
 
             // {{{ inititalize dummy function until flash player is loaded
-            var apifuncs = ["setId", "load", "play", "pause", "seek"];
+            var apifuncs = ["load", "play", "pause", "seek"];
             
             for (var i = 0; i < apifuncs.length; i++) {
                 player[apifuncs[i]] = function(func) {
@@ -230,7 +234,7 @@ function replaceFlashContent() {
             // {{{ setPlayerVar
             window.setPlayerVar = function(playerId, name, value) {
                 var player = $("#" + playerId)[0];
-                var videoDiv = $("#" + playerId).parent()[0];
+                var videoDiv = $("#" + playerId).parent().parent()[0];
 
                 player[name] = value;
 
@@ -259,7 +263,6 @@ function replaceFlashContent() {
             }
             /* }}} */
 
-            player.setId(playerId);
             player.load(videoURL);
         }
         // }}}
@@ -299,9 +302,6 @@ function replaceFlashContent() {
 // }}}
 // {{{ replaceInteractiveContent()
 function replaceInteractiveContent() {
-    // {{{ get language from content tag in header
-    var lang = $("meta[name = 'Content-Language']")[0].content;
-    // }}}
     // {{{ add click event for teaser
     $(".teaser").click( function() {
         document.location = $("a", this)[0].href;
@@ -467,16 +467,6 @@ function replaceInteractiveContent() {
 // }}}
 
 // fix browser behaviours
-// {{{ fixHeightIE6()
-function fixHeightIE6() {
-    var body = $("body");
-    var content = $("content");
-
-    if (body.height() > content.height()) {
-	content.height(body.height());
-    }
-}
-// }}}
 // {{{ fixFlashDisplayOpera()
 function fixFlashDisplayOpera(numcall) {
     numcall++;
@@ -494,6 +484,14 @@ function fixFlashDisplayOpera(numcall) {
 
 // {{{ register events
 $(document).ready(function() {
+    // init global vars
+    // {{{ get language from content tag in header
+    window.lang = $("meta[name = 'Content-Language']")[0].content;
+    // }}}
+    // {{{ get script path for relative links
+    window.scriptPath = $("script[src *= 'global.js']")[0].src.match(/^.*\//).toString();
+    // }}}
+    
     // replace content
     replaceEmailRefs();
     replaceInteractiveContent();
@@ -503,16 +501,12 @@ $(document).ready(function() {
         replaceFlashContent();
 
 	$("body").addClass("flash");
+
+        if ($.browser.opera) {
+            fixFlashDisplayOpera(0);
+        }
     }
 
-    // fix browser bugs
-    if ($.browser.msie) {
-	fixHeightIE6();
-	$(window).resize( fixHeightIE6 );
-    }
-    if ($.browser.opera) {
-	fixFlashDisplayOpera(0);
-    }
 });
 // }}}
     

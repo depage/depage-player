@@ -8,6 +8,7 @@ package {
     import flash.display.StageAlign;
     import flash.display.StageScaleMode;
     import flash.display.StageDisplayState;
+    import flash.display.LoaderInfo;
 
     // events
     import flash.events.*;
@@ -57,6 +58,7 @@ package {
         public function depage_player():void {
             super();
 
+            playerId = loaderInfo.parameters.id;
             stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 
@@ -81,7 +83,6 @@ package {
             addChild(debug);
 
             if (ExternalInterface.available) {
-                ExternalInterface.addCallback("setId", setId);
                 ExternalInterface.addCallback("load", load);
                 ExternalInterface.addCallback("togglePause", togglePause);
                 ExternalInterface.addCallback("play", play);
@@ -118,6 +119,7 @@ package {
 
                     debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
                 }
+                video.x = (stage.stageWidth - video.width) / 2;
                 video.y = (stage.stageHeight - video.height) / 2;
             }
             back.width = stage.stageWidth;
@@ -129,16 +131,11 @@ package {
             loadVideo(url);
         }
         /* }}} */
-        /* {{{ setId*/
-        public function setId(id:String):void {
-            playerId = id;
-        }
-        /* }}} */
 
         //key handler
         /* {{{ keyHandler */
         public function keyHandler(event:KeyboardEvent):void {
-            debug.text = "key: " + event.charCode;
+            debug.text = "key: " + event.charCode + " (" + loaderInfo.parameters.id + ")";
             switch (event.charCode) {
                 case 102: // f
                     toggleFullscreen();
