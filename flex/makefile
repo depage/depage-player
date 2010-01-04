@@ -7,7 +7,7 @@ depage_player.swf : depage_player.as
 	$(mxmlc) $(options) depage_player.as
 
 install : depage_player.swf
-	cp *.swf ../www/js/
+	cp *.swf ../www/js/depage_player/
 
 clean : 
 	rm *.swf

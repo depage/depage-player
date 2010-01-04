@@ -3,11 +3,13 @@
 }
 body {
     font-size: 62.5%;
+    font-family: "Verdana","Arial", "Helvetica Neue", "Helvetica", Sans-Serif;
     width: 100%;
     height: 100%;
 }
 .video {
-    width: 72em;
+    /*width: 72em;*/
+    width: 48em;
     position: relative;
 }
 .video div.wrapper {
@@ -17,21 +19,13 @@ body {
 .video object {
     display: block;
     width: 100%;
-    /*height: 36em;*/
     border: none;
-}
-.video object {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    z-index: 1000;
 }
 .video .controls {
     position: relative;
-    background: #cccccc;
     height: 3em;
     line-height: 3em;
+    color: #666666;
 }
 .video .indicator {
     position: absolute;
@@ -39,8 +33,13 @@ body {
     left: 0;
     z-index: 999;
     width: 100%;
-    height: 90%;
+    height: 30em;
     background: url("../lib/play_indicator.png") center center no-repeat;
+}
+.video .controls img {
+    display: block;
+    width: 3em;
+    height: 3em;
 }
 .video .controls .play,
 .video .controls .pause,
@@ -55,17 +54,24 @@ body {
     left: 0;
 }
 .video .controls .rewind {
-    left: 2em;
+    left: 2.6em;
 }
 .video .controls .progress {
     position: absolute;
     display: block;
     height: 1em;
     top: 1em;
-    left: 5em;
+    left: 6em;
     width: 70%;
-    border: 1px solid #ffffff;
+    border: 1px solid #666666;
     cursor: pointer;
+    overflow: hidden;
+}
+.video .controls .progress,
+.video .controls .buffer {
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
 }
 .video .controls .progress span {
     position: absolute;
@@ -74,14 +80,19 @@ body {
     height: 100%;
 }
 .video .controls .progress .position {
-    /*background: #aaaaaa;*/
-    border-right: 3px solid #ffffff;
+    background: #666666;
 }
 .video .controls .progress .buffer {
+    background: #eeeeee;
 }
 .video .controls .time {
     right: 0;
 }
 .video .controls .time span {
-    font-size: 1.5em;
+    font-size: 1.1em;
+}
+
+#info {
+    overflow-y: scroll;
+    height: 15em;
 }

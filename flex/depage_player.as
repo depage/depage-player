@@ -62,7 +62,7 @@ package {
             stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 
-            stage.addEventListener(Event.ADDED, resizeHandler);
+            stage.addEventListener(Event.ADDED, addedHandler);
             stage.addEventListener(Event.RESIZE, resizeHandler);
             stage.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
 
@@ -71,7 +71,8 @@ package {
             back = new Shape();
 
             back.graphics.beginFill(0x000000);
-            back.graphics.drawRect(0, 0, 1000, 1000);
+            //back.graphics.beginFill(0xdddddd);
+            back.graphics.drawRect(0, 0, 2000, 2000);
             back.graphics.endFill();
 
             addChild(back);
@@ -81,13 +82,18 @@ package {
             debug.width = 100;
 
             addChild(debug);
+        }
+        /* }}} */
+        /* {{{ addedHandler */
+        public function addedHandler(event:Event):void {
+            onResize();
 
             if (ExternalInterface.available) {
-                ExternalInterface.addCallback("load", load);
-                ExternalInterface.addCallback("togglePause", togglePause);
-                ExternalInterface.addCallback("play", play);
-                ExternalInterface.addCallback("pause", pause);
-                ExternalInterface.addCallback("seek", seek);
+                ExternalInterface.addCallback("fload", load);
+                ExternalInterface.addCallback("ftogglePause", togglePause);
+                ExternalInterface.addCallback("fplay", play);
+                ExternalInterface.addCallback("fpause", pause);
+                ExternalInterface.addCallback("fseek", seek);
             }
         }
         /* }}} */
@@ -107,17 +113,17 @@ package {
                     video.width = (video.videoWidth / video.videoHeight) * stage.stageHeight;
                     video.height = stage.stageHeight;
 
-                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " smaller";
+                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " smaller";
                 } else if (video.videoWidth / video.videoHeight > stage.stageWidth / stage.stageHeight) {
                     video.width = stage.stageWidth;
                     video.height = stage.stageWidth * (video.videoHeight / video.videoWidth);
 
-                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " bigger";
+                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " bigger";
                 } else {
                     video.width = stage.stageWidth;
                     video.height = stage.stageHeight;
 
-                    debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
+                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
                 }
                 video.x = (stage.stageWidth - video.width) / 2;
                 video.y = (stage.stageHeight - video.height) / 2;
@@ -135,7 +141,7 @@ package {
         //key handler
         /* {{{ keyHandler */
         public function keyHandler(event:KeyboardEvent):void {
-            debug.text = "key: " + event.charCode + " (" + loaderInfo.parameters.id + ")";
+            //debug.text = "key: " + event.charCode + " (" + loaderInfo.parameters.id + ")";
             switch (event.charCode) {
                 case 102: // f
                     toggleFullscreen();
@@ -151,6 +157,8 @@ package {
         /* {{{ loadVideo */
         public function loadVideo(url:String):void {
             videoURL = url;
+
+            //debug.text = "video: " + videoURL;
 
             connection = new NetConnection();
             connection.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
@@ -195,7 +203,7 @@ package {
         /* {{{ seek */
         private function seek(offset:Number):void {
             stream.seek(offset);
-            setJSvar("currentTime", stream.time);
+            setJSvar("currentTime", offset);
         }
         /* }}} */
         /* {{{ setJSvar */
@@ -226,6 +234,7 @@ package {
             stream.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
 
             sndTrans = new SoundTransform();
+
             //mute
             sndTrans.volume = 0;
             soundTransform = sndTrans;
@@ -273,9 +282,10 @@ package {
         /* {{{ updateTime */
         private function updateTime(event:TimerEvent):void {
             /* this is a hack - find the time when the video size is correct */
-            onResize();
+            //onResize();
 
             setJSvar("currentTime", stream.time);
+            setJSvar("percentLoaded", stream.bytesLoaded / stream.bytesTotal);
         }
         /* }}} */
         /* {{{ securityErrorHandler */

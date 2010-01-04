@@ -108,7 +108,10 @@ jQuery.fn.flash = function(params) {
     }
     html1 += ">";
 
-    return $(html1 + html2 + "</object>");
+    var value = $( html1 + html2 + "</object>");
+    value.plainhtml = html1 + html2 + "</object>";
+
+    return value;
 };
 // }}}
 
@@ -169,13 +172,13 @@ function replaceFlashContent() {
         $(videoDiv).wrapInner("<div class=\"wrapper\"></div>");
 
         var placeholder = $("a img", this);
-        var videoURL = $("<a href=\"" + $("a", this).attr("href") + "\"></a>")[0].toString();
-        var playerId = "dp_player_" + vidIdCount++;
-        var player;
+        var videoURL = $("<a href=\"" + $("a", this)[0].href + "\"></a>")[0].toString();
+        var playerId = "dpPlayer" + vidIdCount++;
+        var flashPlayer;
 
-        // {{{ click on placeholder
+        // {{{ click-event on placeholder
         $("a", videoDiv).click(function() {
-            insertPlayer();
+            videoDiv.data.player.play();
 
             return false;
         });
@@ -193,50 +196,79 @@ function replaceFlashContent() {
             return min + ":" + sec;
         }
         // }}}
+        // {{{ inititalize dummy function until flash player is loaded
+        videoDiv.data = {};
+        videoDiv.data.player = {
+            initialized: false
+        };
+
+        var apifuncs = ["load", "play", "pause", "seek"];
+        
+        for (var i = 0; i < apifuncs.length; i++) {
+            videoDiv.data.player[apifuncs[i]] = function(func) {
+                return function() {
+                    var args = arguments;
+                    var code = "";
+
+                    if (!videoDiv.data.player.initialized) {
+                        insertPlayer();
+                    }
+
+                    code += func + "(";
+                    for (j = 0; j < args.length; j++) {
+                        if (j > 0) {
+                            code += ",";
+                        }
+                        code += "\"" + args[j] + "\"";
+                    }
+                    code += ");";
+
+                    try {
+                        // try on flash player
+                        if ($.browser.msie) {
+                            eval("window['" + playerId + "'].f" + code);
+                        } else {
+                            eval("document['" + playerId + "'].f" + code);
+                        }
+                        //eval("flashPlayer.f" + code);
+                        //$("#info").append("<p>flashPlayer." + code + "</p>");
+                    } catch (e) {
+                        // defer call
+                        setTimeout(function() {
+                            //$("#info").append("<p>defer call of " + func + " - exception: " + e + "</p>");
+                            eval("videoDiv.data.player." + code);
+                        }, 300);
+                    }
+                }
+            }(apifuncs[i]);
+        }
+        // }}}
         // {{{ insertPlayer()
         function insertPlayer() {
-            player = $().flash({
-                src:		scriptPath + "../lib/depage_player.swf",
+            videoDiv.data.player.initialized = true;
+
+            var html = $().flash({
+                src:		scriptPath + "/depage_player/depage_player.swf",
                 width:		placeholder.width(),
                 height:		placeholder.height(),
                 id:             playerId,
                 params: {
                     id: playerId
                 }
-            }).prependTo($("div:first", videoDiv))[0];
+            });
+            $("div:first", videoDiv)[0].innerHTML = html.plainhtml;
 
-            // {{{ inititalize dummy function until flash player is loaded
-            var apifuncs = ["load", "play", "pause", "seek"];
-            
-            for (var i = 0; i < apifuncs.length; i++) {
-                player[apifuncs[i]] = function(func) {
-                    return function() {
-                        var args = arguments;
+            placeholder.parent().hide();
 
-                        setTimeout(function() {
-                            var code = "";
-
-                            code += "player[func](";
-                            for (j = 0; j < args.length; j++) {
-                                if (j > 0) {
-                                    code += ",";
-                                }
-                                code += "args[" + j + "]";
-                            }
-                            code += ");";
-
-                            eval(code);
-                        }, 300);
-                    }
-                }(apifuncs[i]);
-            }
-            // }}}
             // {{{ setPlayerVar
             window.setPlayerVar = function(playerId, name, value) {
-                var player = $("#" + playerId)[0];
+                var flashPlayer = $("#" + playerId)[0];
                 var videoDiv = $("#" + playerId).parent().parent()[0];
 
+                var player = videoDiv.data.player;
+
                 player[name] = value;
+                //$("#info").append("<p>player[" + name + "] = " + value + "</p>");
 
                 // {{{ paused
                 if (name == "paused") {
@@ -255,6 +287,10 @@ function replaceFlashContent() {
                     $(".current", videoDiv).html(floatToTime(player.currentTime) + "/");
                     $(".progress .position", videoDiv).width(player.currentTime / duration * 100 + "%");
                 // }}}
+                // {{{ percentLoaded
+                } else if (name == "percentLoaded") {
+                    $(".progress .buffer", videoDiv).width(player.percentLoaded * 100 + "%");
+                // }}}
                 // {{{ duration
                 } else if (name == "duration") {
                     $(".duration", videoDiv).html(floatToTime(player.duration));
@@ -263,7 +299,7 @@ function replaceFlashContent() {
             }
             /* }}} */
 
-            player.load(videoURL);
+            videoDiv.data.player.load(videoURL);
         }
         // }}}
         // {{{ add controls
@@ -271,30 +307,32 @@ function replaceFlashContent() {
         var size = $("a", videoDiv).attr("data-video-size");
 
         var controls = $("<div class=\"controls\"></div>").appendTo(videoDiv);
-        $("<a class=\"play\">play</a>").appendTo(controls).click( function() {
-            try {
-                player.play();
-            } catch(e) {
-                insertPlayer();
-            }
+        $("<a class=\"play\"><img src=\"" + scriptPath + "/depage_player/play_button.png\" alt=\"play\"></a>").appendTo(controls).click( function() {
+            videoDiv.data.player.play();
         });
-        $("<a class=\"pause\" style=\"display: none\">pause</a>").appendTo(controls).click( function() {
-            player.pause();
+        $("<a class=\"pause\" style=\"display: none\"><img src=\"" + scriptPath + "/depage_player/pause_button.png\" alt=\"pause\"></a>").appendTo(controls).click( function() {
+            videoDiv.data.player.pause();
         });
-        $("<a class=\"rewind\">rewind</a>").appendTo(controls).click( function() {
-            player.seek(0);
+        $("<a class=\"rewind\"><img src=\"" + scriptPath + "/depage_player/rewind_button.png\" alt=\"rewind\"></a>").appendTo(controls).click( function() {
+            videoDiv.data.player.seek(0);
         });
-        $("<span class=\"progress\"><span class=\"position\"></span><span class=\"buffer\"></span></span>").appendTo(controls).mouseup( function(e) {
+        $("<span class=\"progress\"><span class=\"buffer\"></span><span class=\"position\"></span></span>").appendTo(controls).mouseup( function(e) {
             var offset = (e.pageX - $(this).offset().left) / $(this).width() * duration;
 
-            player.seek(offset);
+            videoDiv.data.player.seek(offset);
         });
-        $("<span class=\"time\"><span class=\"current\"></span><span class=\"duration\">" + floatToTime(duration) + "</span></span>").appendTo(controls);
+        $("<span class=\"time\"><span class=\"current\">00:00/</span><span class=\"duration\">" + floatToTime(duration) + "</span></span>").appendTo(controls);
         // }}}
 
         // call autoload/-start
         if ($(this).hasClass("autostart")) {
-            insertPlayer();
+            if (placeholder[0].complete) {
+                insertPlayer();
+            } else {
+                placeholder.load(function() {
+                    insertPlayer();
+                });
+            }
         }
     });
     /* }}} */
