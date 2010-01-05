@@ -236,7 +236,7 @@ package {
             sndTrans = new SoundTransform();
 
             //mute
-            sndTrans.volume = 0;
+            sndTrans.volume = 1;
             soundTransform = sndTrans;
 
             video.attachNetStream(stream);

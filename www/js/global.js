@@ -172,9 +172,16 @@ function replaceFlashContent() {
         $(videoDiv).wrapInner("<div class=\"wrapper\"></div>");
 
         var placeholder = $("a img", this);
+        var legend = $("p.legend", this);
         var videoURL = $("<a href=\"" + $("a", this)[0].href + "\"></a>")[0].toString();
         var playerId = "dpPlayer" + vidIdCount++;
         var flashPlayer;
+
+        if ($.browser.msie && parseInt($.browser.version) < 7) {
+            var imgSuffix = ".gif";
+        } else {
+            var imgSuffix = ".png";
+        }
 
         // {{{ click-event on placeholder
         $("a", videoDiv).click(function() {
@@ -306,15 +313,21 @@ function replaceFlashContent() {
         var duration = $("a", videoDiv).attr("data-video-duration");
         var size = $("a", videoDiv).attr("data-video-size");
 
-        var controls = $("<div class=\"controls\"></div>").appendTo(videoDiv);
-        $("<a class=\"play\"><img src=\"" + scriptPath + "/depage_player/play_button.png\" alt=\"play\"></a>").appendTo(controls).click( function() {
+        var controls = $("<div class=\"controls\"></div>");
+        $("<a class=\"play\"><img src=\"" + scriptPath + "/depage_player/play_button" + imgSuffix + "\" alt=\"play\"></a>").appendTo(controls).click( function() {
             videoDiv.data.player.play();
+
+            return false;
         });
-        $("<a class=\"pause\" style=\"display: none\"><img src=\"" + scriptPath + "/depage_player/pause_button.png\" alt=\"pause\"></a>").appendTo(controls).click( function() {
+        $("<a class=\"pause\" style=\"display: none\"><img src=\"" + scriptPath + "/depage_player/pause_button" + imgSuffix + "\" alt=\"pause\"></a>").appendTo(controls).click( function() {
             videoDiv.data.player.pause();
+
+            return false;
         });
-        $("<a class=\"rewind\"><img src=\"" + scriptPath + "/depage_player/rewind_button.png\" alt=\"rewind\"></a>").appendTo(controls).click( function() {
+        $("<a class=\"rewind\"><img src=\"" + scriptPath + "/depage_player/rewind_button" + imgSuffix + "\" alt=\"rewind\"></a>").appendTo(controls).click( function() {
             videoDiv.data.player.seek(0);
+
+            return false;
         });
         $("<span class=\"progress\"><span class=\"buffer\"></span><span class=\"position\"></span></span>").appendTo(controls).mouseup( function(e) {
             var offset = (e.pageX - $(this).offset().left) / $(this).width() * duration;
@@ -322,6 +335,10 @@ function replaceFlashContent() {
             videoDiv.data.player.seek(offset);
         });
         $("<span class=\"time\"><span class=\"current\">00:00/</span><span class=\"duration\">" + floatToTime(duration) + "</span></span>").appendTo(controls);
+        $("<p class=\"legend\"><span>" + legend.text() + "</span></p>").appendTo(controls);
+
+        controls.appendTo(videoDiv);
+        legend.hide();
         // }}}
 
         // call autoload/-start
