@@ -54,6 +54,10 @@ jQuery.extend(jQuery.browser, {
 	var pv = version.match(/\d+/g);
 	var rv = neededVersion.match(/\d+/g);
 
+        debug("found flash version " + version);
+        debug("on " + navigator.userAgent);
+        
+
 	for (var i = 0; i < 3; i++) {
 	    pv[i] = parseInt(pv[i] || 0);
 	    rv[i] = parseInt(rv[i] || 0);
@@ -173,6 +177,7 @@ function replaceFlashContent() {
 
         var placeholder = $("a img", this);
         var legend = $("p.legend", this);
+        var requirements = $("p.requirements", this);
         var videoURL = $("<a href=\"" + $("a", this)[0].href + "\"></a>")[0].toString();
         var playerId = "dpPlayer" + vidIdCount++;
         var flashPlayer;
@@ -204,6 +209,8 @@ function replaceFlashContent() {
         }
         // }}}
         // {{{ inititalize dummy function until flash player is loaded
+        requirements.hide();
+
         videoDiv.data = {};
         videoDiv.data.player = {
             initialized: false
@@ -249,13 +256,21 @@ function replaceFlashContent() {
                 }
             }(apifuncs[i]);
         }
+        debug("initialized dummy player");
+
         // }}}
         // {{{ insertPlayer()
         function insertPlayer() {
             videoDiv.data.player.initialized = true;
 
+            debug("adding flash player");
+            debug("- player url: " + scriptPath + "/depage_player/depage_player.swf");
+            debug("- width: " + placeholder.width());
+            debug("- height: " + placeholder.height());
+            debug("- id: " + playerId);
+
             var html = $().flash({
-                src:		scriptPath + "/depage_player/depage_player.swf",
+                src:		scriptPath + "depage_player/depage_player.swf",
                 width:		placeholder.width(),
                 height:		placeholder.height(),
                 id:             playerId,
@@ -303,8 +318,11 @@ function replaceFlashContent() {
                     $(".duration", videoDiv).html(floatToTime(player.duration));
                 }
                 // }}}
+                debug("setting player var on '" + playerId + "': " + name + " = " + value);
             }
             /* }}} */
+            
+            debug("trying to load " + videoURL);
 
             videoDiv.data.player.load(videoURL);
         }
@@ -520,6 +538,13 @@ function replaceInteractiveContent() {
     // }}}
 }
 // }}}
+// {{{ debug()
+function debug(msg) {
+    $("#debug").each( function() {
+        $("<p></p>").text(msg).appendTo(this);
+    });
+}
+// }}}
 
 // fix browser behaviours
 // {{{ fixFlashDisplayOpera()
@@ -552,7 +577,7 @@ $(document).ready(function() {
     replaceInteractiveContent();
 
     // add flash content
-    if ($.browser.flash("8,0,0")) {
+    if ($.browser.flash("9,0,115")) {
         replaceFlashContent();
 
 	$("body").addClass("flash");

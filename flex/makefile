@@ -1,5 +1,5 @@
-options = -use-network=true -compiler.optimize -default-background-color=0xFFFFFF
-mxmlc = /opt/flex_sdk_3/bin/mxmlc
+options = -use-network=true -compiler.optimize -default-background-color=0xFFFFFF -static-link-runtime-shared-libraries=true
+mxmlc = /opt/flex_sdk/bin/mxmlc
 
 all: depage_player.swf
 

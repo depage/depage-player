@@ -33,7 +33,7 @@ package {
 
     public class depage_player extends Sprite { 
         /* {{{ variables */
-        private var debug:TextField;
+        private var tdebug:TextField;
         private var back:Shape;
         private var src:String;
 
@@ -51,6 +51,9 @@ package {
         private var vidTimer:Timer = new Timer(250);
 
         private var sndTrans:SoundTransform;
+
+        private var currentTime:Number = 0;
+        private var percentLoaded:Number = 0;
         /* }}} */
 
         //basic
@@ -77,11 +80,11 @@ package {
 
             addChild(back);
 
-            debug = new TextField();
-            debug.height = 20;
-            debug.width = 100;
+            tdebug = new TextField();
+            tdebug.height = 20;
+            tdebug.width = 100;
 
-            addChild(debug);
+            addChild(tdebug);
         }
         /* }}} */
         /* {{{ addedHandler */
@@ -104,26 +107,26 @@ package {
         /* }}} */
         /* {{{ onResize */
         public function onResize():void {
-            debug.x = 10;
-            debug.y = stage.stageHeight - debug.height;
-            debug.width = stage.stageWidth - 20;
+            tdebug.x = 10;
+            tdebug.y = stage.stageHeight - tdebug.height;
+            tdebug.width = stage.stageWidth - 20;
 
             if (video) {
                 if (video.videoWidth / video.videoHeight < stage.stageWidth / stage.stageHeight) {
                     video.width = (video.videoWidth / video.videoHeight) * stage.stageHeight;
                     video.height = stage.stageHeight;
 
-                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " smaller";
+                    debug("event: resize " + stage.stageWidth + "/" + stage.stageHeight  + " smaller");
                 } else if (video.videoWidth / video.videoHeight > stage.stageWidth / stage.stageHeight) {
                     video.width = stage.stageWidth;
                     video.height = stage.stageWidth * (video.videoHeight / video.videoWidth);
 
-                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " bigger";
+                    debug("event: resize " + stage.stageWidth + "/" + stage.stageHeight  + " bigger");
                 } else {
                     video.width = stage.stageWidth;
                     video.height = stage.stageHeight;
 
-                    //debug.text = stage.stageWidth + "/" + stage.stageHeight  + " same";
+                    debug("event: resize " + stage.stageWidth + "/" + stage.stageHeight  + " same");
                 }
                 video.x = (stage.stageWidth - video.width) / 2;
                 video.y = (stage.stageHeight - video.height) / 2;
@@ -141,7 +144,7 @@ package {
         //key handler
         /* {{{ keyHandler */
         public function keyHandler(event:KeyboardEvent):void {
-            //debug.text = "key: " + event.charCode + " (" + loaderInfo.parameters.id + ")";
+            debug("key: " + event.charCode + " (" + loaderInfo.parameters.id + ")");
             switch (event.charCode) {
                 case 102: // f
                     toggleFullscreen();
@@ -158,7 +161,7 @@ package {
         public function loadVideo(url:String):void {
             videoURL = url;
 
-            //debug.text = "video: " + videoURL;
+            debug("video: " + videoURL);
 
             connection = new NetConnection();
             connection.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
@@ -168,6 +171,8 @@ package {
         /* }}} */
         /* {{{ toggleFullscreen */
         private function toggleFullscreen():void {
+            debug("toogle fullscreen");
+
             if (stage.displayState == StageDisplayState.NORMAL) { 
                 stage.displayState = StageDisplayState.FULL_SCREEN;
             } else {
@@ -186,6 +191,8 @@ package {
         /* }}} */
         /* {{{ play */
         private function play():void {
+            debug("action: play");
+
             vidTimer.start();
             paused = false;
             setJSvar("paused", paused);
@@ -194,6 +201,8 @@ package {
         /* }}} */
         /* {{{ pause */
         private function pause():void {
+            debug("action: pause");
+
             vidTimer.stop();
             paused = true;
             setJSvar("paused", paused);
@@ -202,6 +211,8 @@ package {
         /* }}} */
         /* {{{ seek */
         private function seek(offset:Number):void {
+            debug("action: seek to " + offset);
+
             stream.seek(offset);
             setJSvar("currentTime", offset);
         }
@@ -213,25 +224,60 @@ package {
             }
         }
         /* }}} */
+        /* {{{ debug */
+        private function debug(msg:String):void {
+            if (ExternalInterface.available) {
+                ExternalInterface.call("debug", msg);
+            }
+        }
+        /* }}} */
 
         /* {{{ netStatusHandler */
         private function netStatusHandler(event:NetStatusEvent):void {
             switch (event.info.code) {
-                case "NetConnection.Connect.Success":
-                    connectStream();
+                case "NetStream.FileStructureInvalid":
+                    debug("The MP4's file structure is invalid.");
+                    break;
+                case "NetStream.NoSupportedTrackFound":
+                    debug("The MP4 doesn't contain any supported tracks");
                     break;
                 case "NetStream.Play.StreamNotFound":
-                    debug.text = "Unable to locate video: " + videoURL;
+                    debug("Unable to locate video: " + videoURL);
+                    break;
+                case "NetConnection.Connect.Rejected":
+                    debug("NetConnection rejected.");
+                    break;
+                case "NetConnection.Connect.Failed":
+                    debug("NetConnection failed.");
+                    break;
+                case "NetStream.Play.Failed":
+                    debug("Unknown error during play occured.");
+                    break;
+
+                case "NetStream.Seek.InvalidTime":
+                    debug("Trying to seek to an invalid time.");
+                    break;
+
+                case "NetConnection.Connect.Success":
+                    debug("Connecting to stream: " + videoURL);
+                    connectStream();
                     break;
             }
         }
         /* }}} */
         /* {{{ connectStream */
         private function connectStream():void {
+            debug("stream connect successful");
+
             stream = new NetStream(connection);
+
+            // add 5 seconds buffer time
+            stream.bufferTime = 5;
 
             stream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
             stream.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
+            stream.addEventListener(flash.events.IOErrorEvent.IO_ERROR, ioErrorHandler);
+            stream.client = this;
 
             sndTrans = new SoundTransform();
 
@@ -239,6 +285,7 @@ package {
             sndTrans.volume = 1;
             soundTransform = sndTrans;
 
+            debug("attaching stream to video component");
             video.attachNetStream(stream);
             stream.play(videoURL);
             paused = false;
@@ -249,7 +296,7 @@ package {
 
             videoSprite = new Sprite();
             addChild(videoSprite);
-            swapChildren(debug, videoSprite);
+            swapChildren(tdebug, videoSprite);
 
             videoSprite.addChild(video);
             videoSprite.useHandCursor = true;
@@ -261,6 +308,8 @@ package {
         /* }}} */
         /* {{{ videoClick */
         private function videoClick(event:MouseEvent):void {
+            debug("event: click on video");
+
             isDblClick = false;
             dblClickTimer.start();
         }
@@ -274,6 +323,8 @@ package {
         /* }}} */
         /* {{{ videoDoubleClick */
         private function videoDoubleClick(event:MouseEvent):void {
+            debug("event: doubleclick on video");
+
             isDblClick = true;
 
             toggleFullscreen();
@@ -281,23 +332,50 @@ package {
         /* }}} */
         /* {{{ updateTime */
         private function updateTime(event:TimerEvent):void {
-            /* this is a hack - find the time when the video size is correct */
-            //onResize();
+            var ct:Number = Math.floor(stream.time * 10) / 10;
+            var pl:Number = Math.floor(stream.bytesLoaded / stream.bytesTotal * 10) / 10;
 
-            setJSvar("currentTime", stream.time);
-            setJSvar("percentLoaded", stream.bytesLoaded / stream.bytesTotal);
+            if (currentTime != ct) {
+                setJSvar("currentTime", ct);
+                currentTime = ct;
+            }
+            if (percentLoaded != pl) {
+                setJSvar("percentLoaded", pl);
+                percentLoaded = pl;
+            }
         }
         /* }}} */
+
         /* {{{ securityErrorHandler */
         private function securityErrorHandler(event:SecurityErrorEvent):void {
-            debug.text = "securityErrorHandler: " + event;
+            debug("securityErrorHandler: " + event);
         }
         /* }}} */
         /* {{{ asyncErrorHandler */
         private function asyncErrorHandler(event:AsyncErrorEvent):void {
-            // ignore
+            debug("asyncErrorHandler: " + event);
         }
         /* }}} */
+        /* {{{ ioErrorHandler */
+        private function ioErrorHandler(event:IOErrorEvent):void {
+            debug("ioErrorHandler: " + event);
+        }
+        /* }}} */
+
+        /* {{{ onMetaData */
+        public function onMetaData(info:Object):void {
+            debug("metadata arrived:");
+            for(var propName:String in info) {
+                    debug("- " + propName + " = " + info[propName]);
+            }
+        }
+        /* }}} */
+        /* {{{ onCuePoint */
+        public function onCuePoint(info:Object):void {
+            debug("cuepoint: time=" + info.time + " name=" + info.name + " type=" + info.type);
+        }
+        /* }}} */
+
     } 
 }
 
