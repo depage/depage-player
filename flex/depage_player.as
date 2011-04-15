@@ -136,8 +136,10 @@ package {
         }
         /* }}} */
         /* {{{ load*/
-        public function load(url:String):void {
+        public function load(url:String):Boolean {
             loadVideo(url);
+
+            return true;
         }
         /* }}} */
 
@@ -181,40 +183,48 @@ package {
         }
         /* }}} */
         /* {{{ togglePause */
-        private function togglePause():void {
+        private function togglePause():Boolean {
             if (paused) {
                 play();
             } else {
                 pause();
             }
+
+            return true;
         }
         /* }}} */
         /* {{{ play */
-        private function play():void {
+        private function play():Boolean {
             debug("action: play");
 
             vidTimer.start();
             paused = false;
             setJSvar("paused", paused);
             stream.resume();
+
+            return true;
         }
         /* }}} */
         /* {{{ pause */
-        private function pause():void {
+        private function pause():Boolean {
             debug("action: pause");
 
             vidTimer.stop();
             paused = true;
             setJSvar("paused", paused);
             stream.pause();
+
+            return true;
         }
         /* }}} */
         /* {{{ seek */
-        private function seek(offset:Number):void {
+        private function seek(offset:Number):Boolean {
             debug("action: seek to " + offset);
 
             stream.seek(offset);
             setJSvar("currentTime", offset);
+
+            return true;
         }
         /* }}} */
         /* {{{ setJSvar */
@@ -226,9 +236,11 @@ package {
         /* }}} */
         /* {{{ debug */
         private function debug(msg:String):void {
+            /*
             if (ExternalInterface.available) {
                 ExternalInterface.call("debug", msg);
             }
+            */
         }
         /* }}} */
 

@@ -84,6 +84,10 @@ jQuery.fn.flash = function(params) {
     for (var p in params.params) {
 	flashParam.push(p + "=" + encodeURI(params.params[p]));
     }
+    var src = params.src;
+    if (flashParam.length > 0) {
+        src += "?" + flashParam.join("&amp;");
+    }
 
     //object part
     html1 += "<object type=\"application/x-shockwave-flash\" ";
@@ -237,16 +241,20 @@ function replaceFlashContent() {
                     }
                     code += ");";
 
+                    var call_successful = false;
                     try {
                         // try on flash player
                         if ($.browser.msie) {
-                            eval("window['" + playerId + "'].f" + code);
+                            var val = eval("window['" + playerId + "'].f" + code);
                         } else {
-                            eval("document['" + playerId + "'].f" + code);
+                            var val = eval("document['" + playerId + "'].f" + code);
                         }
-                        //eval("flashPlayer.f" + code);
-                        //$("#info").append("<p>flashPlayer." + code + "</p>");
+                        call_successful = val;
                     } catch (e) {
+                        call_successful = false;
+                    }
+                    if (!call_successful) {
+                        debug("repeat call of " + func);
                         // defer call
                         setTimeout(function() {
                             //$("#info").append("<p>defer call of " + func + " - exception: " + e + "</p>");
@@ -540,9 +548,11 @@ function replaceInteractiveContent() {
 // }}}
 // {{{ debug()
 function debug(msg) {
+    /*
     $("#debug").each( function() {
         $("<p></p>").text(msg).appendTo(this);
     });
+    */
 }
 // }}}
 
