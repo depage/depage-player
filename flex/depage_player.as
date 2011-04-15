@@ -286,6 +286,9 @@ package {
             soundTransform = sndTrans;
 
             debug("attaching stream to video component");
+
+            video.smoothing = true;
+
             video.attachNetStream(stream);
             stream.play(videoURL);
             paused = false;
