@@ -38,6 +38,7 @@ package {
         private var src:String;
 
         private var paused:Boolean = true;
+        private var muted:Boolean = false;
         private var videoURL:String;
         private var connection:NetConnection;
         private var stream:NetStream;
@@ -97,6 +98,9 @@ package {
                 ExternalInterface.addCallback("fplay", play);
                 ExternalInterface.addCallback("fpause", pause);
                 ExternalInterface.addCallback("fseek", seek);
+                ExternalInterface.addCallback("fmute", mute);
+                ExternalInterface.addCallback("funmute", unmute);
+                ExternalInterface.addCallback("ftoggleMute", toggleMute);
             }
         }
         /* }}} */
@@ -227,6 +231,50 @@ package {
             return true;
         }
         /* }}} */
+        /* {{{ mute */
+        private function mute():Boolean {
+            debug("action: mute");
+
+            sndTrans = new SoundTransform();
+
+            //mute
+            sndTrans.volume = 0;
+            soundTransform = sndTrans;
+
+            muted = true;
+            setJSvar("muted", muted);
+
+            return true;
+        }
+        /* }}} */
+        /* {{{ unmute */
+        private function unmute():Boolean {
+            debug("action: unmute");
+
+            sndTrans = new SoundTransform();
+
+            //mute
+            sndTrans.volume = 1;
+            soundTransform = sndTrans;
+
+            muted = false;
+            setJSvar("muted", muted);
+
+            return true;
+        }
+        /* }}} */
+        /* {{{ toggleMute */
+        private function toggleMute():Boolean {
+            if (muted) {
+                mute();
+            } else {
+                unmute();
+            }
+
+            return true;
+        }
+        /* }}} */
+
         /* {{{ setJSvar */
         private function setJSvar(name:String, value:*):void {
             if (ExternalInterface.available) {
