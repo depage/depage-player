@@ -2,28 +2,51 @@
 <html>
     <!-- {{{ head -->
     <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
-	<title>Movie Player</title>
-
-	<link rel="stylesheet" type="text/css" href="css/global.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <title>Movie Player</title>
+    
+    <link rel="stylesheet" type="text/css" href="css/global.css">
         
-	<script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>
-	<script type="text/javascript" src="js/global.js"></script>
-
-	<meta name="Content-Language" content="de">
-	<meta name="description" content="">
-	<meta name="author" content="Frank Hellenkamp">
-	<meta name="generator" content="depage::cms">
-	<meta name="keywords" content="">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/global.js"></script>
+    <script type="text/javascript" src="js/depage-flash.js"></script>
+    <script type="text/javascript" src="js/depage-player.js"></script>
+    
+    <meta name="Content-Language" content="de">
+    <meta name="description" content="">
+    <meta name="author" content="Frank Hellenkamp">
+    <meta name="generator" content="depage::cms">
+    <meta name="keywords" content="">
+    
     </head>
     <!-- }}} -->
     <body>
-        <div class="video noautostart">
-            <a href="lib/jochen_raedeker2.mp4" data-video-duration="588.0533333333333" data-video-size="198.82MB"><span class="indicator"></span><img alt="Dies ist der Videotitel" src="lib/testmovie2.png"></a>
-            <p class="legend"><a href="lib/jochen_raedeker.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+    
+        <div id="new" class="video noautostart">
+            <span class="indicator"></span>
+            <video poster="lib/testmovie2.png">
+                <source src="lib/big_buck_bunny.mp4" type="video/mp4">
+                <!-- FALLBACK -->
+                <!-- INSERT FLASH PLAYER -->
+                <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB">
+                    <img alt="Dies ist der Videotitel" src="lib/testmovie2.png">
+                </a>
+            </video>
+            <p class="legend"><a href="lib/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
             <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
         </div>
+        
+        <!-- 
+        <div id="old" class="video noautostart">
+            <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB">
+                <span class="indicator"></span>
+                <img alt="Dies ist der Videotitel" src="lib/testmovie2.png">
+            </a>
+            <p class="legend"><a href="lib/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+        </div>
+         -->
 
         <div id="debug">
             <p>&nbsp;</p>

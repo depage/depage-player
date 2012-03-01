@@ -8,6 +8,9 @@
 
 // global helpers
 // {{{ getHexColorFromString()
+
+// deprecate
+
 function getHexColorFromString(colorString) {
     if (colorString == "transparent") {
 	var hexCode = "000000";
@@ -32,27 +35,30 @@ function getHexColorFromString(colorString) {
 
 // javascript flash detection
 // {{{ jquery.browser.flash
+
+// TODO separate flash plugin 
+
 jQuery.extend(jQuery.browser, {
     flash: (function (neededVersion) {
         var found = false;
-	var version = "0,0,0";
-
-	try {
-	    // get ActiveX Object for Internet Explorer
-	    version = new ActiveXObject("ShockwaveFlash.ShockwaveFlash").GetVariable('$version').replace(/\D+/g, ',').match(/^,?(.+),?$/)[1];
-	} catch(e) {
-	    // check plugins for Firefox, Safari, Opera etc.
-	    try {
-		if (navigator.mimeTypes["application/x-shockwave-flash"].enabledPlugin) {
-		    version = (navigator.plugins["Shockwave Flash 2.0"] || navigator.plugins["Shockwave Flash"]).description.replace(/\D+/g, ",").match(/^,?(.+),?$/)[1];
-		}
-	    } catch(e) {
-		return false;
-	    }		
-	}
-
-	var pv = version.match(/\d+/g);
-	var rv = neededVersion.match(/\d+/g);
+        var version = "0,0,0";
+        
+        try {
+            // get ActiveX Object for Internet Explorer
+            version = new ActiveXObject("ShockwaveFlash.ShockwaveFlash").GetVariable('$version').replace(/\D+/g, ',').match(/^,?(.+),?$/)[1];
+        } catch(e) {
+            // check plugins for Firefox, Safari, Opera etc.
+            try {
+                if (navigator.mimeTypes["application/x-shockwave-flash"].enabledPlugin) {
+                     version = (navigator.plugins["Shockwave Flash 2.0"] || navigator.plugins["Shockwave Flash"]).description.replace(/\D+/g, ",").match(/^,?(.+),?$/)[1];
+                }
+            } catch(e) {
+                 return false;
+            }
+        }
+        
+        var pv = version.match(/\d+/g);
+        var rv = neededVersion.match(/\d+/g);
 
         debug("found flash version " + version);
         debug("on " + navigator.userAgent);
@@ -125,6 +131,10 @@ jQuery.fn.flash = function(params) {
 
 // replace content, depending on reader capabilities
 // {{{ replaceEmailChars()
+
+
+// TODO deprecate
+
 function replaceEmailChars(mail) {
     mail = unescape(mail);
     mail = mail.replace(/ \*at\* /g, "@");
@@ -139,6 +149,9 @@ function replaceEmailChars(mail) {
 }
 // }}}
 // {{{ replaceEmailRefs()
+
+// TODO deprecate
+
 function replaceEmailRefs() {
     $("a[href*='mailto:']").each(function() {
         // replace attribute
@@ -152,6 +165,9 @@ function replaceEmailRefs() {
 }
 // }}}
 // {{{ replaceFlashContent()
+
+// TODO goes in external project
+
 function replaceFlashContent() {
     /* {{{ replace flash images */
     $("img.flash_repl").each(function() {
@@ -165,6 +181,9 @@ function replaceFlashContent() {
 		transparent:    $(this).hasClass("trans")
 	    }) 
 	);
+	
+	//DISABLES IMAGE LINK
+	
 	if (parent[0].nodeName == "A") {
 	    // deactivate link for surrounding a-node in safari
 	    parent[0].href = "javascript:return false;";
@@ -174,6 +193,8 @@ function replaceFlashContent() {
     /* {{{ replace flash videos */
     var vidIdCount = 0;
 
+    //*** PLAYER ENTRY *** //
+    
     $(".video").each(function() {
         var videoDiv = this;
 
@@ -382,6 +403,9 @@ function replaceFlashContent() {
 }
 // }}}
 // {{{ replaceInteractiveContent()
+
+// TODO deprecate
+
 function replaceInteractiveContent() {
     // {{{ add click event for teaser
     $(".teaser").click( function() {
@@ -573,7 +597,13 @@ function fixFlashDisplayOpera(numcall) {
 // }}}
 
 // {{{ register events
-$(document).ready(function() {
+$(window).load(function() {
+
+	$('#new').depage_player();
+	
+	//$('#old').depage_player();
+
+	/*
     // init global vars
     // {{{ get language from content tag in header
     window.lang = $("meta[name = 'Content-Language']")[0].content;
@@ -583,10 +613,13 @@ $(document).ready(function() {
     // }}}
     
     // replace content
+    
+    // TODO deprecate
+    
     replaceEmailRefs();
     replaceInteractiveContent();
 
-    // add flash content
+    // add flash content - first flash version to support h264
     if ($.browser.flash("9,0,115")) {
         replaceFlashContent();
 
@@ -596,6 +629,7 @@ $(document).ready(function() {
             fixFlashDisplayOpera(0);
         }
     }
+    */
 
 });
 // }}}
