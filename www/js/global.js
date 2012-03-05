@@ -599,12 +599,10 @@ function fixFlashDisplayOpera(numcall) {
 // {{{ register events
 $(window).load(function() {
 
-	$('#new').depage_player();
+	$('#new, #new-1, #new-2, #new-3').depage_player();
 	
-	//$('#old').depage_player();
-
 	/*
-    // init global vars
+	// init global vars
     // {{{ get language from content tag in header
     window.lang = $("meta[name = 'Content-Language']")[0].content;
     // }}}
@@ -620,7 +618,7 @@ $(window).load(function() {
     replaceInteractiveContent();
 
     // add flash content - first flash version to support h264
-    if ($.browser.flash("9,0,115")) {
+    if ($.depage.flash({requiredVersion:"9,0,115"}).detect()) {
         replaceFlashContent();
 
 	$("body").addClass("flash");

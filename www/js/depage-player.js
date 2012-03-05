@@ -16,6 +16,20 @@
     };
     
     /**
+     * Shiv Video
+     * 
+     * Adds video element to the DOM to enable recognition in ie.
+     * 
+     * @return void
+     */
+    if ($.browser.msie && $.browser.version < 9) {
+        $('head').append('<style>video{display:inline-block;*display:inline;*zoom:1}</style>');
+        document.createElement("video");
+        document.createElement("source");
+    }
+    
+    
+    /**
      * Depage Player
      * 
      * @param el
@@ -42,6 +56,7 @@
         
         var video = $('video', base.$el)[0];
         var duration = $("a", base.$el).attr("data-video-duration"); // TODO get from video?
+        var indicator = $("a.indicator", base.$el);
         
         // Cache the control selectors
         base.controls = {};
@@ -79,19 +94,13 @@
          * 
          */
         base.videoSupport = function (){
-            var bool = false;
+            var bool = new Boolean(false);
                 
             try {
-                if ( bool = !!video.canPlayType ) {
-                    bool = new Boolean(support);
-                    bool.ogg = video.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,'');
-                    bool.h264 = video.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,'');
-                    bool.webm = video.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,'');
-                }
-                else {
-                    bool.flash.h264 = $.deepage.flash({requiredVersion:"9,0,115"}); //flash version to support h264
-                }
-                
+                bool.ogg = video.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,'');
+                bool.h264 = video.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,'');
+                bool.webm = video.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,'');
+                bool.flash = $.depage.flash({requiredVersion:"9,0,115"}).detect(); // earliest support for flash player with h264
             } catch(e) { }
             
             return bool;
@@ -115,25 +124,22 @@
             
             var support = base.videoSupport();
             
-            if ( support ) {
+            // TODO determine sources available
+            if ( support.h264 ) {
                 // HTML5 VIDEO
                 base.player = video;
                 base.html5.bind();
-            } else if (support.flash.h264) {
+            } else if (support.flash) {
                 // FLASH
                  base.player = { initialized: false };
                  base.flash.transport();
                  
-                 // TODO TEST!
-                 var placeholder = $("a img",  base.$el);
-                 if (video.autostart) {
-                     if (placeholder[0].complete) {
-                         base.flash.insertPlayer();
-                     } else {
-                         placeholder.load(function() {
-                             base.flash.insertPlayer();
-                         });
-                     }
+                 if (video.preload || video.autobuffer) {
+                     base.flash.insertPlayer();
+                 }
+                 
+                 if (video.autoplay) {
+                     base.player.play();
                  }
             }
             else {
@@ -141,14 +147,13 @@
                 return false;
             }
             
-            
-            base.$el.wrapInner("<div class=\"wrapper\"></div>");
-            
-            $(".indicator", base.$el).click(function() {
+            indicator.click(function() {
                 base.player.play();
                 $(this).hide();
                 return false;
             });
+            
+            base.$el.wrapInner("<div class=\"wrapper\"></div>");
             
             base.addControls();
         };
@@ -178,21 +183,82 @@
             });
             
             $video.bind("durationchange", function(){
-                base.duration();
+                base.duration(this.duration);
             });
             
             $video.bind("timeupdate", function(){
                 base.setCurrentTime(this.currentTime);
              });
             
+            var defer = null;
+            
             $video.bind("progress", function(){
-                 base.percentLoaded(this.buffered.end(this.buffered.length-1) / duration);
+                
+                var progress = function(){
+                    var loaded = 0;
+                    if (video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
+                        loaded = video.buffered.end(video.buffered.length-1) / video.duration;
+                    } 
+                    // for browsers not supporting buffered.end (e.g., FF3.6 and Safari 5)
+                    else if (typeof(video.bytesTotal) !== 'undefined' && video.bytesTotal > 0
+                            && typeof(video.bufferedBytes) !== 'undefined') {
+                        loaded = video.bufferedBytes / video.bytesTotal;
+                    }
+                    
+                    base.percentLoaded(loaded);
+                    
+                    // last progress event not fired
+                    if ( !defer && loaded < 1 ) {
+                        defer = setInterval(function(){ progress(); }, 1500);
+                    }
+                    else if (loaded >= 1) {
+                        clearInterval(defer);
+                    }
+                    //alert(loaded);
+                };
+                
+                progress();
             });
+            
+            if (base.options.width != video.width || base.options.height != video.height) {
+                 base.html5.resize(base.options.width, base.options.height);
+            }
             
             // create a seek method for the html5 video
             base.player.seek = function(offset){
                 base.player.currentTime = offset;
             };
+        };
+        // }}}
+        
+        
+        // {{ resize
+        /**
+         * HTML5 Resize Video
+         * 
+         * @return void
+         */
+        base.html5.resize = function(toWidth, toHeight) {
+            
+            var ratio = video.videoWidth / video.videoHeight;
+            
+            if (base.options.crop) {
+                // TODO get from outer div
+                var overflow = $('<div class="crop" />').css({
+                    width: toWidth + 'px',
+                    height: '100%',//toHeight + 'px',
+                    overflow:'hidden'
+                });
+                
+                $(video).wrap(overflow);
+            }
+            
+            if (base.options.scale) {
+                toHeight = toWidth / ratio;
+            }
+            
+            video.height = toHeight;
+            video.width = toWidth;
         };
         // }}}
         
@@ -335,15 +401,15 @@
          * 
          * Insert the flash object for the player using the depage flash plugin.
          * 
-         * Overwrites the video fallback image.
+         * Overwrites the video player.
+         * 
+         * TODO could not get flash playting in video fallback?
          * 
          * @return void
          */
         base.flash.insertPlayer = function() {
             
-            var fallbackLink = $("video a", base.$el);
-            
-            var url = fallbackLink.attr("href");
+            var url = indicator[0].href;
             
             var html = $.depage.flash().build({
                 src    : base.options.playerPath,
@@ -355,7 +421,7 @@
                 }
             });
             
-            fallbackLink.replaceWith(innerHTML = html.plainhtml);
+            $("video", base.$el).replaceWith(innerHTML = html.plainhtml);
             
             window.setPlayerVar = base.flash.setPlayerVar;
             
@@ -408,6 +474,7 @@
          * @return void
          */
         base.play = function() {
+            indicator.hide();
             base.controls.play.hide();
             base.controls.pause.show();
             base.controls.rewind.show();
@@ -464,7 +531,7 @@
          * 
          */
         base.duration = function(duration) {
-            base.controls.duration.html(floatToTime(duration));
+            base.controls.duration.html(base.floatToTime(duration));
         };
         // }}}
         
@@ -497,12 +564,25 @@
         return base;
     };
     
+    /**
+     * Options
+     * 
+     * @param playerPath - path to player folder
+     * @param playerName - name of the flash swf
+     * @param playerId
+     * @param width - video width
+     * @param height - video height
+     * @param crop - crop this video when resizing
+     * @param scale - scale this video when resizing
+     */
     $.depage.player.defaultOptions = {
         playerPath : "js/depage_player/depage_player.swf",
         scriptPath : "js/depage_player/",
         playerId : "dpPlayer",
-        width : null,
-        height : null
+        width : 600,
+        height : 400,
+        crop: true,
+        scale: true
     };
     
     $.fn.depage_player = function(param1, options){
