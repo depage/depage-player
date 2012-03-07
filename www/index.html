@@ -13,6 +13,10 @@
     <script type="text/javascript" src="js/depage-flash.js"></script>
     <script type="text/javascript" src="js/depage-player.js"></script>
     
+    <!--[if lt IE 9]>
+    <!-- <script type="text/javascript" src="js/shiv.js"></script> -->
+    <![endif]-->
+    
     <meta name="Content-Language" content="de">
     <meta name="description" content="">
     <meta name="author" content="Frank Hellenkamp">
@@ -22,21 +26,52 @@
     </head>
     <!-- }}} -->
     <body>
-    
-        <div id="new" class="video noautostart">
-            <span class="indicator"></span>
-            <video poster="lib/testmovie2.png">
-                <source src="lib/big_buck_bunny.mp4" type="video/mp4">
-                <!-- FALLBACK -->
-                <!-- INSERT FLASH PLAYER -->
-                <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB">
-                    <img alt="Dies ist der Videotitel" src="lib/testmovie2.png">
-                </a>
+        <div id="new" class="video" style="width: 600px; height: 400px">
+            <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <video>
+                <source src="lib/big_buck_bunny.mp4" type="video/mp4" />
+                <img alt="Dies ist der Videotitel" src="lib/testmovie2.png" />
             </video>
             <p class="legend"><a href="lib/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
             <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
         </div>
         
+        <br />
+<!-- 
+        <div id="new-1" class="video">
+            <a href="lib/lights_on_off.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <video>
+                <source src="lib/lights_on_off.mp4" type="video/mp4" />
+                <img alt="Dies ist der Videotitel" src="lib/lights_on_off.mp4" />
+            </video>
+            <p class="legend"><a href="lib/lights_on_off.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+        </div>
+         
+        <br />
+
+        <div id="new-2" class="video" style="width: 600px">
+            <a href="lib/FINAL_12_12b.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <video>
+                <source src="lib/FINAL_12_12b.mp4" type="video/mp4" />
+                <img alt="Dies ist der Videotitel" src="lib/FINAL_12_12b.mp4" />
+            </video>
+            <p class="legend"><a href="lib/lights_on_off.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+        </div>
+        
+        <br />
+
+        <div id="new-3" class="video" style="width: 600px">
+            <a href="lib/uwe-sachse_19-07.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <video>
+                <source src="lib/uwe-sachse_19-07.mp4" type="video/mp4" />
+                <img alt="Dies ist der Videotitel" src="lib/uwe-sachse_19-07.mp4" />
+            </video>
+            <p class="legend"><a href="lib/uwe-sachse_19-07.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+        </div>
+        -->
         <!-- 
         <div id="old" class="video noautostart">
             <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB">
@@ -46,12 +81,10 @@
             <p class="legend"><a href="lib/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
             <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
         </div>
-         -->
+        -->
+        
 
-        <div id="debug">
-            <p>&nbsp;</p>
-            <h2>Debug</h2>
-        </div>
+
     </body>
     <!-- vim:set ft=html sw=4 sts=4 fdm=marker : -->
 </html>

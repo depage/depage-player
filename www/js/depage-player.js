@@ -207,58 +207,323 @@
                     
                     base.percentLoaded(loaded);
                     
-                    // last progress event not fired
+                    // last progress event not fired in all browsers
                     if ( !defer && loaded < 1 ) {
                         defer = setInterval(function(){ progress(); }, 1500);
                     }
                     else if (loaded >= 1) {
                         clearInterval(defer);
                     }
-                    //alert(loaded);
                 };
                 
                 progress();
             });
             
             if (base.options.width != video.width || base.options.height != video.height) {
-                 base.html5.resize(base.options.width, base.options.height);
+                
+                 var height = base.options.height || base.$el.height();
+                 var width = base.options.width || base.$el.width();
+                
+                 base.resize(width, height);
             }
             
-            // create a seek method for the html5 video
+            /**
+             * HTML5 Seek
+             * 
+             * Create a seek method for the html5 player
+             * 
+             * @return false
+             */
             base.player.seek = function(offset){
                 base.player.currentTime = offset;
+                return false;
+            };
+            
+            /**
+             * HTML5 Fullscreen
+             * 
+             * Create a fullscreen method for the html5 player
+             * 
+             * @return false
+             */
+            base.player.fullscreen = function(){
+                
+                base.fullscreen();
+                return false;
+                
+                if (typeof(base.player.webkitEnterFullScreen) !== 'undefined') {
+                    base.player.webkitEnterFullScreen();
+                } else if (typeof(base.player.webkitRequestFullScreen) !== 'undefined') {
+                    // webkit (works in safari and chrome canary)
+                    base.player.webkitRequestFullScreen();
+                } else if (typeof(base.player.mozRequestFullScreen) !== 'undefined'){
+                    // firefox (works in nightly)
+                    base.player.mozRequestFullScreen();
+                } else if (typeof(base.player.requestFullScreen) !== 'undefined') {
+                	// mozilla proposal
+                    base.player.requestFullScreen();
+                } else if (typeof(element.requestFullscreen) !== 'undefined') {
+                    // w3c proposal
+                    base.player.requestFullscreen();
+                } else {
+                    // fallback
+                    base.resize(screen.width, screen.height);
+                }
+                return false;
+            };
+            
+            /**
+             * HTML5 Exit Fullscreen
+             * 
+             * Exit fullscreen method required for fallback
+             * 
+             * @return false
+             */
+            base.player.exitfullscreen = function(){
+                
+                base.exitFullscreen();
+                return false;
+                
+                if (typeof(base.player.webkitExitFullScreen) !== 'undefined') {
+                    base.player.webkitExitFullScreen();
+                } else if (typeof(document.webkitCancelFullScreen) !== 'undefined') {
+                    // webkit (works in safari and chrome canary)
+                    document.webkitCancelFullScreen();
+                } else if (typeof(document.mozCancelFullScreen) !== 'undefined'){
+                    // firefox (works in nightly)
+                    document.mozCancelFullScreen();
+                } else if (typeof(document.cancelFullScreen) !== 'undefined') {
+                    // mozilla proposal
+                    document.cancelFullScreen();
+                } else if (typeof(element.requestFullscreen) !== 'undefined') {
+                    // w3c proposal
+                    base.player.requestFullscreen();
+                } else {
+                    // fallback
+                    base.exitFullscreen();
+                }
+                return false;
             };
         };
         // }}}
         
         
-        // {{ resize
+        // {{{ resize
         /**
-         * HTML5 Resize Video
+         * Resize Player
          * 
          * @return void
          */
-        base.html5.resize = function(toWidth, toHeight) {
+        base.resize = function(toWidth, toHeight) {
             
-            var ratio = video.videoWidth / video.videoHeight;
+            // get the player object HTML5 video or flash
+            var $player = $('video', base.$el);
             
-            if (base.options.crop) {
-                // TODO get from outer div
-                var overflow = $('<div class="crop" />').css({
-                    width: toWidth + 'px',
-                    height: '100%',//toHeight + 'px',
-                    overflow:'hidden'
-                });
+            if ($player.length === 0){
+                // FLASH
+                $player = $('#' + base.options.playerId, base.$el);
+            }
+            
+            var ratio = $player.is('video') // TODO make param
+                ? $player[0].videoWidth / $player[0].videoHeight
+                : $player[0].width / $player[0].height;
+            
+            // scale to outer div maintain constraints
+            if (base.options.constrain) {
+                if (toWidth / toHeight < ratio) {
+                    toWidth = Math.ceil(ratio * toHeight);
+                } else {
+                    toHeight = Math.ceil(toWidth / ratio);
+                }
+            }
+            
+            // add a crop overlay to match wrapper
+            if (base.options.crop){
                 
-                $(video).wrap(overflow);
+                var cropWidth = base.$el.width();
+                var cropHeight = base.$el.height();
+                
+                if (cropWidth && cropHeight) {
+                    
+                    base.addOverlay($player, cropWidth, cropHeight);
+                    
+                    if (!$player.is('object')) {
+                        // HTML 5 (changing flash player properties causes reframe)
+                        // center video
+                        $player
+                           .css({ 
+                                position: 'relative',
+                                left: (cropWidth - toWidth) / 2,
+                                top: (cropHeight - toHeight) / 2,
+                        });
+                    }
+                }
             }
             
-            if (base.options.scale) {
-                toHeight = toWidth / ratio;
+            if ($player.is('object')) {
+                // FLASH - scale wrapper
+                $('.crop', base.$el)
+                    .width(toWidth)
+                    .height(toHeight);
+                $('.wrapper', base.$el)
+                	.width(toWidth)
+                	.height(toHeight);
+            } else {
+                $player
+                    .width(toWidth)
+                    .height(toHeight);
             }
+        };
+        // }}}
+        
+        
+        // addOverlay {{{
+        /**
+         * Add Overlay
+         * 
+         * Checks if an overlay container exists on the given element (video player).
+         * And adds it if not - this allows the video to be cropped.
+         * 
+         * @param $croppedEl - selector to wrap
+         * @param cropWidth - width of overlay
+         * @param cropHeight - height of overlay
+         * 
+         * @return void
+         * 
+         */
+        base.addOverlay = function($croppedEl, cropWidth, cropHeight) {
+            var css = {
+                    width: cropWidth + 'px',
+                    height: cropHeight + 'px',
+                    overflow:'hidden'
+                };
+                
+            var overlay = $('.crop', base.$el).css(css);
             
-            video.height = toHeight;
-            video.width = toWidth;
+            if (overlay.length === 0) {
+                overlay = $('<div class="crop" />').css(css);
+                $croppedEl.wrap(overlay);
+            }
+        };
+        // }}}
+        
+        
+        // {{{
+        /**
+         * Fullscreen
+         * 
+         * @return void
+         */
+        base.fullscreen = function () {
+            var $body = $('body');
+            var $controls = $('.controls', base.$el);
+            var $button = $('.fullscreen', base.$el);
+            
+            // save original css attributes
+            var style = {
+                'body': $body.attr('style'),
+                'controls' : $controls.attr('style')
+            };
+            
+            // save original dimensions
+            var area = {
+                'width': base.$el.width(),
+                'height': base.$el.height()
+            }; 
+            
+            var fullWidth = $(window).width();
+            var fullHeight = $(window).height();
+            
+            // resize container
+            base.$el
+                .width(fullWidth)
+                .height(fullHeight);
+            
+            // resize video
+            base.resize(fullWidth, fullHeight);
+            
+            // set fullscreen css
+            $body.css( {
+                'margin':0,
+                'padding':0,
+                'background-color':'#000',
+                // body overflow in ff causes flash to reframe
+                'overflow': $('video', base.$el).length ? 'hidden' : '' // TODO make param 
+            });
+            
+            $controls
+                .css({
+                    'top' : '-48px', // TODO calculate?
+                    'background-color': '#fff'
+                })
+                // animate the controls on hover
+                .bind('mouseover.fullscreen', function() {
+                    $this = $(this);
+                    
+                    $this.stop();
+                    
+                    var val = 0;
+                    
+                    if ($this.css('opacity') < 1) {
+                        val = 1;
+                    }
+                    
+                    $this.animate({opacity:val});
+                });
+            
+            // listen to the escape key
+            $(document).bind('keyup.fullscreen', function(e){
+                if (e.keyCode == 27) {
+                    exitFullscreen();
+                    $(document).unbind('keyup.fullscreen');
+                }
+            });
+            
+            // change button click handler
+            $button
+                .unbind('click')
+                .click(function(){
+                    exitFullscreen();
+                });
+            
+            /**
+             * Exit Fullscreen
+             * 
+             * @return void
+             */
+            var exitFullscreen = function () {
+                
+                // restore css attributes
+                $body.removeAttr('style');
+                
+                if (typeof(style.body) !== 'undefined'){
+                     $body.css(style.body);
+                }
+                
+                $controls.removeAttr('style');
+                
+                if (typeof(style.controls) !== 'undefined'){
+                     $controls.css(style.controls);
+                }
+                
+                // restore container dimensions
+                base.$el
+                    .width(area.width)
+                    .height(area.height);
+                
+                // resize video
+                base.resize(area.width, area.height);
+                
+                // unbind control animations
+                $controls.unbind('mouseover.fullscreen');
+                
+                // restore button click handler
+                $button
+                    .unbind()
+                    .click(function(){
+                        base.fullscreen();
+                    });
+            };
         };
         // }}}
         
@@ -300,6 +565,13 @@
                     base.player.seek(0);
                     return false;
                 });
+            
+            base.controls.rewind = $("<a class=\"fullscreen\"><img src=\"" + base.options.scriptPath + "fullscreen_button" + imgSuffix + "\" alt=\"fullscreen\"></a>")
+                .appendTo(div)
+                .click(function() {
+                    base.player.fullscreen();
+                    return false;
+            });
             
             base.controls.progress = $("<span class=\"progress\" />")
                 .mouseup(function(e) {
@@ -359,16 +631,31 @@
                     
                     var code = base.flash.serialize(action, Array.prototype.slice.call(arguments));
                     
-                    var caller = setInterval(function() {
-                        try {
-                            if (($.browser.msie && eval("window['" + base.options.playerId + "'].f" + code))
-                                     || eval("document['" + base.options.playerId + "'].f" + code)){
-                                 clearInterval(caller);
-                            }
-                        } catch (e) {}
+                    var defer = setInterval(function() {
+                        call();
                     }, 300);
+                    
+                    var call = function() {
+	                    try {
+	                        if (($.browser.msie && eval("window['" + base.options.playerId + "'].f" + code))
+	                                 || eval("document['" + base.options.playerId + "'].f" + code)){
+	                             clearInterval(defer);
+	                        }
+	                    } catch (e) {}
+                    };
                 };
             });
+            
+            /**
+             * Fullscreen
+             * 
+             * NB - Flash fullscreen cannot be controlled externally.
+             * 
+             * @return void
+             */
+            base.player.fullscreen = function() {
+                base.fullscreen();
+            };
         };
         // }}}
         
@@ -387,7 +674,7 @@
         base.flash.serialize = function ( action, args ){
             
             $.each(args, function(i, arg){
-                args[i] = '"' + arg.replace('"', '\"') + '"';
+                args[i] = '"' + String(arg).replace('"', '\"') + '"';
             });
            
             return action + "(" + args.join(',') + ");";
@@ -403,8 +690,6 @@
          * 
          * Overwrites the video player.
          * 
-         * TODO could not get flash playting in video fallback?
-         * 
          * @return void
          */
         base.flash.insertPlayer = function() {
@@ -416,12 +701,15 @@
                 width  : base.options.width,
                 height : base.options.height,
                 id     : base.options.playerId,
+                transparent: true,
                 params : {
                     id : base.options.playerId
                 }
             });
             
-            $("video", base.$el).replaceWith(innerHTML = html.plainhtml);
+            $video = $("video", base.$el);
+            //base.addOverlay($video, base.options.width, base.options.height);
+            $video.replaceWith(innerHTML = html.plainhtml);
             
             window.setPlayerVar = base.flash.setPlayerVar;
             
@@ -573,7 +861,7 @@
      * @param width - video width
      * @param height - video height
      * @param crop - crop this video when resizing
-     * @param scale - scale this video when resizing
+     * @param constrain - constrain dimensions of this video when resizing
      */
     $.depage.player.defaultOptions = {
         playerPath : "js/depage_player/depage_player.swf",
@@ -581,8 +869,8 @@
         playerId : "dpPlayer",
         width : 600,
         height : 400,
-        crop: true,
-        scale: true
+        crop: false,
+        constrain: true
     };
     
     $.fn.depage_player = function(param1, options){

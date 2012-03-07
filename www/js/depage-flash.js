@@ -146,8 +146,8 @@
             html2 += "<param name=\"allowFullScreen\" value=\"true\" />";
             
             if (params.transparent === true) {
-                html1 += "mwmode=\"transparent\"";
-                html2 += "<param name=\"wmode\" value=\"transparent\" />";
+                html1 += "mwmode=\"direct\"";
+                html2 += "<param name=\"wmode\" value=\"direct\" />";
             }
             
             html1 += ">";
