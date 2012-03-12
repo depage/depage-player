@@ -13,12 +13,13 @@
 ;(function($){
     if(!$.depage){
         $.depage = {};
-    };
+    }
     
+    // shiv {{{ 
     /**
      * Shiv Video
      * 
-     * Adds video element to the DOM to enable recognition in ie.
+     * Adds video element to the DOM to enable recognition in IE < 9.
      * 
      * @return void
      */
@@ -27,13 +28,14 @@
         document.createElement("video");
         document.createElement("source");
     }
+    // }}}
     
     
     /**
      * Depage Player
      * 
      * @param el
-     * @param param1
+     * @param index - player index
      * @param options
      * 
      * @return context
@@ -50,13 +52,17 @@
         // Add a reverse reference to the DOM object
         base.$el.data("depage.player", base);
         
-        // Namespacing
-        base.html5 = {};
-        base.flash = {};
-        
+        // cache selectors
         var video = $('video', base.$el)[0];
-        var duration = $("a", base.$el).attr("data-video-duration"); // TODO get from video?
-        var indicator = $("a.indicator", base.$el);
+        var $video = $(video);
+        var $indicator = $("a.indicator", base.$el);
+        
+        var $wrapper = null;
+        
+        var duration = video.currentTime || $("a", base.$el).attr("data-video-duration");
+        
+        // Set the player mode - 'html5' / 'flash' / false (fallback)
+        var mode = false;
         
         // Cache the control selectors
         base.controls = {};
@@ -65,15 +71,15 @@
         /**
          * Init
          * 
-         * Setup the options. Determine the player to be used - HTML5 or Flash.
+         * Setup the options.
          * 
          * @return void
          */
         base.init = function(){
             base.options = $.extend({}, $.depage.player.defaultOptions, options);
             
-            base.options.width = base.options.width || video.width;
-            base.options.height = base.options.height || video.height;
+            base.options.width = base.options.width || base.$el.width();
+            base.options.height = base.options.height || base.$el.height();
             
             base.options.playerId = base.options.playerId + index;
         };
@@ -84,26 +90,30 @@
         /**
          * Video Support
          * 
-         * Modernizr script checks HTML5 video support in the browser.
+         * Checks browser video codec support.
          * 
          * http://www.modernizr.com/
          * 
          * NB IE9 Running on Windows Server SKU can cause an exception to be thrown, bug #224
          * 
-         * @returns boolean
+         * @returns object
          * 
          */
         base.videoSupport = function (){
-            var bool = new Boolean(false);
+            
+            var support = {};
                 
             try {
-                bool.ogg = video.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,'');
-                bool.h264 = video.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,'');
-                bool.webm = video.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,'');
-                bool.flash = $.depage.flash({requiredVersion:"9,0,115"}).detect(); // earliest support for flash player with h264
+                support.ogg = video.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,'');
+                support.h264 = video.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,'');
+                support.webm = video.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,'');
             } catch(e) { }
+            finally{
+                // earliest support for flash player with h264
+                support.flash = $.depage.flash({requiredVersion:"9,0,115"}).detect();
+            }
             
-            return bool;
+            return support;
         };
         // }}}
         
@@ -115,7 +125,7 @@
          * Entry point to build the video.
          *  - Adds the wrapper div
          *  - Build the controls
-         *  - Adds indicator click handler
+         *  - Adds $indicator click handler
          *  - Autoloads
          * 
          * @return void
@@ -124,186 +134,349 @@
             
             var support = base.videoSupport();
             
-            // TODO determine sources available
-            if ( support.h264 ) {
-                // HTML5 VIDEO
+            // determine the supported player mode - flash or html5
+            if ( support.h264 && $('source:[type="video/mp4"]', video).length > 0
+                || support.ogg && $('source:[type="video/ogg"]', video).length > 0
+                || support.webm && $('source:[type="video/webm"]', video).length > 0) {
+                mode = 'html5';
                 base.player = video;
-                base.html5.bind();
+                base.html5.setup();
             } else if (support.flash) {
-                // FLASH
+                 mode = 'flash';
+                 base.overlay($video);
+                 
+                 // setup flash player
                  base.player = { initialized: false };
                  base.flash.transport();
                  
-                 if (video.preload || video.autobuffer) {
+                 // preload
+                 if (typeof(video.preload) !== 'undefined' && video.preload != 'none') {
                      base.flash.insertPlayer();
                  }
-                 
+                 // autoplay
                  if (video.autoplay) {
                      base.player.play();
                  }
+                 
+                 // TODO support for loop
             }
             else {
-                // VIDEO UNSUPPORTED
+                // fallback
                 return false;
             }
             
-            indicator.click(function() {
+            $indicator.click(function() {
                 base.player.play();
-                $(this).hide();
                 return false;
             });
-            
-            base.$el.wrapInner("<div class=\"wrapper\"></div>");
             
             base.addControls();
         };
         // }}}
         
         
-        // {{ html5 bind
         /**
-         * HTML5 Bind Media Events
-         * 
-         * @return void
+         * Namespace HTML5 funcitons
          */
-        base.html5.bind = function(){
-            
-            var $video = $(video);
-            
-            $video.bind("play", function(){
-                base.play();
-            });
-            
-            $video.bind("playing", function(){
-                base.play();
-            });
-            
-            $video.bind("pause", function(){
-                base.pause();
-            });
-            
-            $video.bind("durationchange", function(){
-                base.duration(this.duration);
-            });
-            
-            $video.bind("timeupdate", function(){
-                base.setCurrentTime(this.currentTime);
-             });
-            
-            var defer = null;
-            
-            $video.bind("progress", function(){
+        base.html5 = {
+            // {{ html5 setup
+            /**
+             * HTML5 Setup the handlers for the HTML5 video
+             * 
+             * @return void
+             */
+            setup : function(){
                 
-                var progress = function(){
-                    var loaded = 0;
-                    if (video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
-                        loaded = video.buffered.end(video.buffered.length-1) / video.duration;
-                    } 
-                    // for browsers not supporting buffered.end (e.g., FF3.6 and Safari 5)
-                    else if (typeof(video.bytesTotal) !== 'undefined' && video.bytesTotal > 0
-                            && typeof(video.bufferedBytes) !== 'undefined') {
-                        loaded = video.bufferedBytes / video.bytesTotal;
-                    }
+                $video.bind("play", function(){
+                    base.play();
+                });
+                
+                $video.bind("playing", function(){
+                    base.play();
+                });
+                
+                $video.bind("pause", function(){
+                    base.pause();
+                    });
+                
+                $video.bind("durationchange", function(){
+                    base.duration(this.duration);
+                });
+                
+                $video.bind("timeupdate", function(){
+                    base.setCurrentTime(this.currentTime);
+                });
+                
+                var defer = null;
+                
+                $video.bind("progress", function(){
                     
-                    base.percentLoaded(loaded);
+                    var progress = function(){
+                        var loaded = 0;
+                        if (video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
+                            loaded = video.buffered.end(video.buffered.length-1) / video.duration;
+                        } 
+                        // for browsers not supporting buffered.end (e.g., FF3.6 and Safari 5)
+                        else if (typeof(video.bytesTotal) !== 'undefined' && video.bytesTotal > 0
+                                && typeof(video.bufferedBytes) !== 'undefined') {
+                            loaded = video.bufferedBytes / video.bytesTotal;
+                        }
+                        
+                        base.percentLoaded(loaded);
+                        
+                        // last progress event not fired in all browsers
+                        if ( !defer && loaded < 1 ) {
+                            defer = setInterval(function(){ progress(); }, 1500);
+                        }
+                        else if (loaded >= 1) {
+                             clearInterval(defer);
+                        }
+                    };
                     
-                    // last progress event not fired in all browsers
-                    if ( !defer && loaded < 1 ) {
-                        defer = setInterval(function(){ progress(); }, 1500);
-                    }
-                    else if (loaded >= 1) {
-                        clearInterval(defer);
-                    }
+                    progress();
+                });
+                
+                // TODO doesn't always seem to fire?
+                $video.bind("loadeddata", function(){
+                    base.percentLoaded(1);
+                });
+                
+                // resize
+                if (base.options.width != video.videoWidth || base.options.height != video.videoHeight) {
+                     var height = base.options.height || base.$el.height();
+                     var width = base.options.width || base.$el.width();
+                     base.resize(width, height);
+                }
+                
+                /**
+                 * HTML5 Seek
+                 * 
+                 * Create a seek method for the html5 player
+                 * 
+                 * @return false
+                 */
+                base.player.seek = function(offset){
+                    base.player.currentTime = offset;
+                    return false;
                 };
                 
-                progress();
-            });
-            
-            if (base.options.width != video.width || base.options.height != video.height) {
+                /**
+                 * HTML5 Fullscreen
+                 * 
+                 * Create a fullscreen method for the html5 player
+                 * 
+                 * @return false
+                 */
+                base.player.fullscreen = function(){
+                    
+                    if (typeof(base.player.webkitEnterFullScreen) !== 'undefined') {
+                        base.player.webkitEnterFullScreen();
+                    } else if (typeof(base.player.webkitRequestFullScreen) !== 'undefined') {
+                        // webkit (works in safari and chrome canary)
+                        base.player.webkitRequestFullScreen();
+                    } else if (typeof(base.player.mozRequestFullScreen) !== 'undefined'){
+                        // firefox (works in nightly)
+                        base.player.mozRequestFullScreen();
+                    } else if (typeof(base.player.requestFullScreen) !== 'undefined') {
+                        // mozilla proposal
+                        base.player.requestFullScreen();
+                    } else if (typeof(base.player.requestFullscreen) !== 'undefined') {
+                        // w3c proposal
+                        base.player.requestFullscreen();
+                    } else {
+                        // fallback
+                        base.fullscreen();
+                    }
+                    return false;
+                };
                 
-                 var height = base.options.height || base.$el.height();
-                 var width = base.options.width || base.$el.width();
-                
-                 base.resize(width, height);
+                /**
+                 * HTML5 Exit Fullscreen
+                 * 
+                 * Exit fullscreen method required for fallback
+                 * 
+                 * @return false
+                 */
+                base.player.exitfullscreen = function(){
+                    
+                    if (typeof(base.player.webkitExitFullScreen) !== 'undefined') {
+                        base.player.webkitExitFullScreen();
+                    } else if (typeof(document.webkitCancelFullScreen) !== 'undefined') {
+                        // webkit (works in safari and chrome canary)
+                        document.webkitCancelFullScreen();
+                    } else if (typeof(document.mozCancelFullScreen) !== 'undefined'){
+                        // firefox (works in nightly)
+                        document.mozCancelFullScreen();
+                    } else if (typeof(document.cancelFullScreen) !== 'undefined') {
+                        // mozilla proposal
+                        document.cancelFullScreen();
+                    } else if (typeof(base.player.requestFullscreen) !== 'undefined') {
+                        // w3c proposal
+                        base.player.requestFullscreen();
+                    }
+                    return false;
+                };
             }
+            // }}}
+        };
+        
+        /**
+         * Namespace Flash Functions
+         */
+        base.flash = {
             
+            // flash.transport() {{{
             /**
-             * HTML5 Seek
+             * Flash Transport
              * 
-             * Create a seek method for the html5 player
+             * Adds transport actions to the flash player.
              * 
-             * @return false
+             * Uses set interval to wait for flash initialization.
+             * 
+             * @return void
              */
-            base.player.seek = function(offset){
-                base.player.currentTime = offset;
-                return false;
-            };
+            transport : function() {
+                
+                var actions = [ "load", "play", "pause", "seek" ];
+                
+                // {{{ serialize()
+                /**
+                 * serialize
+                 * 
+                 * Seriliazes the arguments passed to the flash player object
+                 * 
+                 * @param string action - control action called
+                 * @param array args - flash player arguments
+                 * 
+                 * @return string code
+                 */ 
+                var serialize = function ( action, args ){
+                    
+                    $.each(args, function(i, arg){
+                        args[i] = '"' + String(arg).replace('"', '\"') + '"';
+                    });
+                   
+                    return action + "(" + args.join(',') + ");";
+                };
+                // }}}
+                
+                $.each ( actions, function (i, action) {
+                    
+                    base.player[action] = function() {
+                        
+                        if (!base.player.initialized) {
+                            base.flash.insertPlayer();
+                        }
+                        
+                        var code = serialize(action, Array.prototype.slice.call(arguments));
+                        
+                        var defer = setInterval(function() {
+                            caller();
+                        }, 300);
+                        
+                        var caller = function() {
+                            try {
+                                if (($.browser.msie && eval("window['" + base.options.playerId + "'].f" + code))
+                                         || eval("document['" + base.options.playerId + "'].f" + code)){
+                                     clearInterval(defer);
+                                }
+                            } catch (e) { }
+                        };
+                    };
+                });
+                
+                /**
+                 * Fullscreen
+                 * 
+                 * Add a custom fullscreen acion for the flash player
+                 * 
+                 * @return void
+                 */
+                base.player.fullscreen = function() {
+                    if (!base.player.initialized) {
+                        base.flash.insertPlayer();
+                    }
+                    base.fullscreen();
+                };
+            },
+            // }}}
             
+            
+            // {{{ flash.insertPlayer()
             /**
-             * HTML5 Fullscreen
+             * Insert Flash Player
              * 
-             * Create a fullscreen method for the html5 player
+             * Insert the flash object for the player using the depage flash plugin.
              * 
-             * @return false
+             * Overwrites the video and placeholder image.
+             * 
+             * @return void
              */
-            base.player.fullscreen = function(){
+            insertPlayer : function() {
                 
-                base.fullscreen();
-                return false;
+                var url = $indicator[0].href;
                 
-                if (typeof(base.player.webkitEnterFullScreen) !== 'undefined') {
-                    base.player.webkitEnterFullScreen();
-                } else if (typeof(base.player.webkitRequestFullScreen) !== 'undefined') {
-                    // webkit (works in safari and chrome canary)
-                    base.player.webkitRequestFullScreen();
-                } else if (typeof(base.player.mozRequestFullScreen) !== 'undefined'){
-                    // firefox (works in nightly)
-                    base.player.mozRequestFullScreen();
-                } else if (typeof(base.player.requestFullScreen) !== 'undefined') {
-                	// mozilla proposal
-                    base.player.requestFullScreen();
-                } else if (typeof(element.requestFullscreen) !== 'undefined') {
-                    // w3c proposal
-                    base.player.requestFullscreen();
-                } else {
-                    // fallback
-                    base.resize(screen.width, screen.height);
+                var html = $.depage.flash().build({
+                    src    : base.options.playerPath,
+                    // TODO needs to fit screen for resize
+                    //width  : base.options.width,
+                    //height : base.options.height,
+                    id     : base.options.playerId,
+                    wmode  : 'transparent',
+                    params : {
+                        id : base.options.playerId
+                    }
+                });
+                
+                // use innerHTML for IE < 9 otherwise player breaks!!
+                $wrapper[0].innerHTML = html.plainhtml;
+                
+                window.setPlayerVar = base.flash.setPlayerVar;
+                
+                base.player.initialized = true;
+                
+                base.player.load(url);
+            },
+            // }}}
+            
+            
+            // {{{ setPlayerVar()
+            /**
+             * Flash Set Player Var
+             * 
+             * This is a callback for the flash player.
+             * 
+             * @param action
+             * @param value
+             * 
+             * @return void
+             */
+            setPlayerVar : function(playerId, action, value) {
+                
+                base.player[action] = value;
+                
+                switch (action) {
+                    case "paused" : 
+                        if (base.player.paused){
+                            base.pause();
+                        } else {
+                            base.play();
+                        }
+                        break;
+                        
+                    case "currentTime" :
+                        base.setCurrentTime(base.player.currentTime);
+                        break;
+                        
+                    case "percentLoaded" :
+                        base.percentLoaded(base.player.percentLoaded);
+                        break;
+                        
+                    case "duration" :
+                        base.duration();
+                        break;
                 }
-                return false;
-            };
-            
-            /**
-             * HTML5 Exit Fullscreen
-             * 
-             * Exit fullscreen method required for fallback
-             * 
-             * @return false
-             */
-            base.player.exitfullscreen = function(){
-                
-                base.exitFullscreen();
-                return false;
-                
-                if (typeof(base.player.webkitExitFullScreen) !== 'undefined') {
-                    base.player.webkitExitFullScreen();
-                } else if (typeof(document.webkitCancelFullScreen) !== 'undefined') {
-                    // webkit (works in safari and chrome canary)
-                    document.webkitCancelFullScreen();
-                } else if (typeof(document.mozCancelFullScreen) !== 'undefined'){
-                    // firefox (works in nightly)
-                    document.mozCancelFullScreen();
-                } else if (typeof(document.cancelFullScreen) !== 'undefined') {
-                    // mozilla proposal
-                    document.cancelFullScreen();
-                } else if (typeof(element.requestFullscreen) !== 'undefined') {
-                    // w3c proposal
-                    base.player.requestFullscreen();
-                } else {
-                    // fallback
-                    base.exitFullscreen();
-                }
-                return false;
-            };
+            }
         };
         // }}}
         
@@ -312,24 +485,25 @@
         /**
          * Resize Player
          * 
+         * Attempt to resize the player to the given dimensions.
+         * 
+         * Will constrain or crop according to the base.options.
+         * 
          * @return void
          */
         base.resize = function(toWidth, toHeight) {
             
-            // get the player object HTML5 video or flash
-            var $player = $('video', base.$el);
+            // get the player object
+            var $player = mode==='flash'
+                ? $('object', base.$el)
+                : $video;
             
-            if ($player.length === 0){
-                // FLASH
-                $player = $('#' + base.options.playerId, base.$el);
-            }
-            
-            var ratio = $player.is('video') // TODO make param
-                ? $player[0].videoWidth / $player[0].videoHeight
-                : $player[0].width / $player[0].height;
+            var ratio = mode==='flash'
+                ? $player[0].width / $player[0].height
+                : $player[0].videoWidth / $player[0].videoHeight;
             
             // scale to outer div maintain constraints
-            if (base.options.constrain) {
+            if (base.options.constrain && !isNaN(ratio)) {
                 if (toWidth / toHeight < ratio) {
                     toWidth = Math.ceil(ratio * toHeight);
                 } else {
@@ -337,37 +511,31 @@
                 }
             }
             
-            // add a crop overlay to match wrapper
-            if (base.options.crop){
+            // crop to wrapper
+            if (mode==='html5' && base.options.crop){
                 
                 var cropWidth = base.$el.width();
                 var cropHeight = base.$el.height();
                 
                 if (cropWidth && cropHeight) {
                     
-                    base.addOverlay($player, cropWidth, cropHeight);
+                    base.overlay($player, cropWidth, cropHeight);
                     
-                    if (!$player.is('object')) {
-                        // HTML 5 (changing flash player properties causes reframe)
-                        // center video
-                        $player
-                           .css({ 
-                                position: 'relative',
-                                left: (cropWidth - toWidth) / 2,
-                                top: (cropHeight - toHeight) / 2,
-                        });
-                    }
+                    // center video
+                    $player
+                       .css({ 
+                            position: 'relative',
+                            left: (cropWidth - toWidth) / 2,
+                            top: (cropHeight - toHeight) / 2
+                    });
                 }
             }
             
-            if ($player.is('object')) {
-                // FLASH - scale wrapper
-                $('.crop', base.$el)
+            if (mode === 'flash') {
+                // resize by scaling wrapper
+                $wrapper
                     .width(toWidth)
                     .height(toHeight);
-                $('.wrapper', base.$el)
-                	.width(toWidth)
-                	.height(toHeight);
             } else {
                 $player
                     .width(toWidth)
@@ -377,32 +545,44 @@
         // }}}
         
         
-        // addOverlay {{{
+        // Overlay {{{
         /**
-         * Add Overlay
+         * Overlay
          * 
-         * Checks if an overlay container exists on the given element (video player).
-         * And adds it if not - this allows the video to be cropped.
+         * Adds an overlay container if not present.
+         * Adds inline styling where provided.
+         * Used to crop the video or wrap the flash player.
          * 
-         * @param $croppedEl - selector to wrap
-         * @param cropWidth - width of overlay
-         * @param cropHeight - height of overlay
+         * @param $wrap - selector to wrap
+         * @param width - width of overlay
+         * @param height - height of overlay
+         * @param overflow - overflow of overlay
          * 
          * @return void
-         * 
          */
-        base.addOverlay = function($croppedEl, cropWidth, cropHeight) {
-            var css = {
-                    width: cropWidth + 'px',
-                    height: cropHeight + 'px',
-                    overflow:'hidden'
-                };
-                
-            var overlay = $('.crop', base.$el).css(css);
+        base.overlay = function($wrap, width, height, overflow) {
             
-            if (overlay.length === 0) {
-                overlay = $('<div class="crop" />').css(css);
-                $croppedEl.wrap(overlay);
+            var style = {};
+            
+            if (width) {
+                style.width = width + 'px';
+            }
+            
+            if (height) {
+                style.height = height + 'px'; 
+            }
+            
+            if (true || overflow) {
+                style.overflow  = 'hidden';
+            };
+            
+            if (!$wrapper) {
+                $wrap.wrap('<div class="wrapper" />');
+                $wrapper = $('.wrapper'); // cache after dom append for IE < 9 ?!
+            }
+            
+            if (!$.isEmptyObject(style)) {
+                $wrapper.css(style);
             }
         };
         // }}}
@@ -412,9 +592,13 @@
         /**
          * Fullscreen
          * 
+         * Custom full screen method implemented by the flash player,
+         * and as a fallback for HTML5 video. 
+         * 
          * @return void
          */
         base.fullscreen = function () {
+            var $window = $(window); 
             var $body = $('body');
             var $controls = $('.controls', base.$el);
             var $button = $('.fullscreen', base.$el);
@@ -431,29 +615,49 @@
                 'height': base.$el.height()
             }; 
             
-            var fullWidth = $(window).width();
-            var fullHeight = $(window).height();
+            /**
+             * FitScreen
+             * 
+             * @return void
+             */
+            var fitScreen = function() {
+                var screenWidth = $window.width();
+                var screenHeight = $window.height();
+                
+                // resize container
+                base.$el
+                    .width(screenWidth)
+                    .height(screenHeight);
+                
+                // resize video
+                base.resize(screenWidth, screenHeight);
+            };
             
-            // resize container
-            base.$el
-                .width(fullWidth)
-                .height(fullHeight);
-            
-            // resize video
-            base.resize(fullWidth, fullHeight);
+            fitScreen();
             
             // set fullscreen css
             $body.css( {
                 'margin':0,
                 'padding':0,
-                'background-color':'#000',
-                // body overflow in ff causes flash to reframe
-                'overflow': $('video', base.$el).length ? 'hidden' : '' // TODO make param 
+                // body overflow in FF causes flash to reframe
+                'overflow': mode==='html5' ? 'hidden' : '' 
             });
+            
+            // TODO controls not taking opacity IE8
+            var opacity  = function (val) {
+                return {
+                    'opactity': val,
+                    'filter': 'alpha(opacity='+ val +')', // IE < 8
+                    // '-ms-filter': 'progid:DXImageTransform.Microsoft.Alpha(Opacity=' + val + ')', // IE8 ?
+                    // 'filter': 'progid:DXImageTransform.Microsoft.Alpha(Opacity=' + val + ')' // IE8 ?
+                };
+            };
             
             $controls
                 .css({
-                    'top' : '-48px', // TODO calculate?
+                    'position' : 'absolute',
+                    'bottom' : '0px',
+                    'width' : '100%',
                     'background-color': '#fff'
                 })
                 // animate the controls on hover
@@ -468,7 +672,7 @@
                         val = 1;
                     }
                     
-                    $this.animate({opacity:val});
+                    $this.animate(opacity(1));
                 });
             
             // listen to the escape key
@@ -485,6 +689,12 @@
                 .click(function(){
                     exitFullscreen();
                 });
+            
+            // bind to window resize
+            $window.bind('resize.fullscreen', function(){
+                fitScreen();
+            });
+            
             
             /**
              * Exit Fullscreen
@@ -505,6 +715,9 @@
                 if (typeof(style.controls) !== 'undefined'){
                      $controls.css(style.controls);
                 }
+                
+                // make sure opacity is restored
+                $controls.css(opacity(0));
                 
                 // restore container dimensions
                 base.$el
@@ -532,7 +745,7 @@
         /**
          * Add Controls
          * 
-         * Adds flash player controls
+         * Adds player controls
          * 
          * @return void
          */
@@ -541,7 +754,7 @@
             var legend = $("p.legend", base.$el);
             var requirements = $("p.requirements", base.$el);
             
-            var imgSuffix = ($.browser.msie && parseInt($.browser.version) < 7) ? ".gif" : ".png";
+            var imgSuffix = ($.browser.msie && $.browser.version < 7) ? ".gif" : ".png";
             
             var div = $("<div class=\"controls\"></div>");
             
@@ -562,7 +775,7 @@
             base.controls.rewind = $("<a class=\"rewind\"><img src=\"" + base.options.scriptPath + "rewind_button" + imgSuffix + "\" alt=\"rewind\"></a>")
                 .appendTo(div)
                 .click(function() {
-                    base.player.seek(0);
+                    base.player.seek(0.1); // setting to zero breaks iOS 3.2
                     return false;
                 });
             
@@ -606,155 +819,6 @@
         };
         // }}}
         
-        
-        // flash.transport() {{{
-        /**
-         * Flash Transport
-         * 
-         * Adds transport actions to the flash player.
-         * 
-         * Uses set interval to wait for flash initialization.
-         * 
-         * @return void
-         */
-        base.flash.transport = function() {
-            
-            var actions = [ "load", "play", "pause", "seek" ];
-            
-            $.each ( actions, function (i, action) {
-                
-                base.player[action] = function() {
-                    
-                    if (!base.player.initialized) {
-                        base.flash.insertPlayer();
-                    }
-                    
-                    var code = base.flash.serialize(action, Array.prototype.slice.call(arguments));
-                    
-                    var defer = setInterval(function() {
-                        call();
-                    }, 300);
-                    
-                    var call = function() {
-	                    try {
-	                        if (($.browser.msie && eval("window['" + base.options.playerId + "'].f" + code))
-	                                 || eval("document['" + base.options.playerId + "'].f" + code)){
-	                             clearInterval(defer);
-	                        }
-	                    } catch (e) {}
-                    };
-                };
-            });
-            
-            /**
-             * Fullscreen
-             * 
-             * NB - Flash fullscreen cannot be controlled externally.
-             * 
-             * @return void
-             */
-            base.player.fullscreen = function() {
-                base.fullscreen();
-            };
-        };
-        // }}}
-        
-        
-        // {{{ serialize()
-        /**
-         * Flash Serialize
-         * 
-         * Seriliazes the arguments parsed to the flash player object
-         * 
-         * @param string action - control action called
-         * @param array args - flash player arguments
-         * 
-         * @return string code
-         */ 
-        base.flash.serialize = function ( action, args ){
-            
-            $.each(args, function(i, arg){
-                args[i] = '"' + String(arg).replace('"', '\"') + '"';
-            });
-           
-            return action + "(" + args.join(',') + ");";
-        };
-        // }}}
-        
-        
-        // {{{ flash.insertPlayer()
-        /**
-         * Insert Flash Player
-         * 
-         * Insert the flash object for the player using the depage flash plugin.
-         * 
-         * Overwrites the video player.
-         * 
-         * @return void
-         */
-        base.flash.insertPlayer = function() {
-            
-            var url = indicator[0].href;
-            
-            var html = $.depage.flash().build({
-                src    : base.options.playerPath,
-                width  : base.options.width,
-                height : base.options.height,
-                id     : base.options.playerId,
-                transparent: true,
-                params : {
-                    id : base.options.playerId
-                }
-            });
-            
-            $video = $("video", base.$el);
-            //base.addOverlay($video, base.options.width, base.options.height);
-            $video.replaceWith(innerHTML = html.plainhtml);
-            
-            window.setPlayerVar = base.flash.setPlayerVar;
-            
-            base.player.initialized = true;
-            base.player.load(url);
-        };
-        // }}}
-        
-        
-        // {{{ setPlayerVar()
-        /**
-         * Flash Set Player Var
-         * 
-         * This is a callback for the flash player.
-         * 
-         * @param action
-         * @param value
-         * 
-         * @return void
-         */
-        base.flash.setPlayerVar = function(playerId, action, value) {
-            
-            base.player[action] = value;
-            
-            switch (action) {
-                case "paused" : 
-                    base.player.paused ? base.pause() : base.play();
-                    break;
-                    
-                case "currentTime" :
-                    base.setCurrentTime(base.player.currentTime);
-                    break;
-                    
-                case "percentLoaded" :
-                    base.percentLoaded(base.player.percentLoaded);
-                    break;
-                    
-                case "duration" :
-                    base.duration();
-                    break;
-            }
-        };
-        // }}}
-        
-        
         // {{{ play()
         /**
          * Play
@@ -762,13 +826,12 @@
          * @return void
          */
         base.play = function() {
-            indicator.hide();
+            $indicator.hide();
             base.controls.play.hide();
             base.controls.pause.show();
             base.controls.rewind.show();
         };
         // }}}
-        
         
         // {{{ pause()
         /**
@@ -800,6 +863,7 @@
         // {{{ percentLoaded
         /**
          * Percent Loaded
+         * 
          * 
          * @param percentLoaded
          * 
@@ -855,7 +919,7 @@
     /**
      * Options
      * 
-     * @param playerPath - path to player folder
+     * @param playerPath - absolute path to player folder 
      * @param playerName - name of the flash swf
      * @param playerId
      * @param width - video width
@@ -864,12 +928,12 @@
      * @param constrain - constrain dimensions of this video when resizing
      */
     $.depage.player.defaultOptions = {
-        playerPath : "js/depage_player/depage_player.swf",
+        playerPath : window.location.href + "js/depage_player/depage_player.swf",
         scriptPath : "js/depage_player/",
         playerId : "dpPlayer",
-        width : 600,
-        height : 400,
-        crop: false,
+        width : false,
+        height : false,
+        crop: true,
         constrain: true
     };
     

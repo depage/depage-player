@@ -123,6 +123,12 @@ body {
 .video .controls .legend span {
     font-size: 1.1em;
 }
+
+video {
+    width: 640px;
+    height: 360px;
+}
+
 /* }}} */
 
 /* vim:set ft=css sw=4 sts=4 fdm=marker : */

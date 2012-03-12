@@ -139,15 +139,16 @@
             if (params.id !== undefined) {
                 html1 += "id=\"" + params.id + "\" ";
             }
-            html1 += "allowFullScreen=\"true\" ";
+            html1 += "allowFullScreen=\"true\" "; //allowScriptAccess=\"sameDomain\" ";
             
             // param part
             html2 += "<param name=\"movie\" value=\"" + params.src + "?" + flashParam.join("&amp;") + "\" />";
             html2 += "<param name=\"allowFullScreen\" value=\"true\" />";
+            //html2 += "<param name=\"allowScriptAccess\" value=\"sameDomain\">";
             
-            if (params.transparent === true) {
-                html1 += "mwmode=\"direct\"";
-                html2 += "<param name=\"wmode\" value=\"direct\" />";
+            if (typeof(params.wmode) !== 'undefined') {
+                html1 += 'mwmode="' + params.wmode + '"';
+                html2 += '<param name="wmode" value="' + params.wmode +'" />';
             }
             
             html1 += ">";

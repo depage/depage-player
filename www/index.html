@@ -13,10 +13,6 @@
     <script type="text/javascript" src="js/depage-flash.js"></script>
     <script type="text/javascript" src="js/depage-player.js"></script>
     
-    <!--[if lt IE 9]>
-    <!-- <script type="text/javascript" src="js/shiv.js"></script> -->
-    <![endif]-->
-    
     <meta name="Content-Language" content="de">
     <meta name="description" content="">
     <meta name="author" content="Frank Hellenkamp">
@@ -26,14 +22,17 @@
     </head>
     <!-- }}} -->
     <body>
-        <div id="new" class="video" style="width: 600px; height: 400px">
+        <!--  need dimensions for video cropping, absolute position allows fullscreen without scroll bars in FF -->
+        <div id="new" class="video" style="width: 640px; height: 360px; position: absolute">
             <a href="lib/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <!--  need css dimensions for iPad -->
+           <!--  <object type="application/x-shockwave-flash" data="http://localhost/depage-player/js/depage_player/depage_player.swf?id=dpPlayer0" width="null" height="null" id="dpPlayer0" allowFullScreen="true" ><param name="movie" value="http://localhost/depage-player/js/depage_player/depage_player.swf?id=dpPlayer0" /><param name="allowFullScreen" value="true" /></object> -->
             <video>
                 <source src="lib/big_buck_bunny.mp4" type="video/mp4" />
-                <img alt="Dies ist der Videotitel" src="lib/testmovie2.png" />
+                <img alt="Dies ist der Videotitel" src="lib/testmovie2.png" width="640" height="360" />
             </video>
             <p class="legend"><a href="lib/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
-            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="http://get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
         </div>
         
         <br />
