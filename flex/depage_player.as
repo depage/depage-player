@@ -284,7 +284,7 @@ package {
         /* {{{ setJSvar */
         private function setJSvar(name:String, value:*):void {
             if (ExternalInterface.available) {
-                ExternalInterface.call("setPlayerVar", playerId, name, value);
+                ExternalInterface.call("jQuery.depage.player.setPlayerVar", playerId, name, value);
             }
         }
         /* }}} */
