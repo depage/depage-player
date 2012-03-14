@@ -150,17 +150,18 @@
                  base.flash.transport();
                  
                  // preload
-                 if (typeof(video.preload) !== 'undefined' && video.preload != 'none') {
+                 var preloadAttr = $video.attr('preload');
+                 if (typeof preloadAttr !== 'undefined' && preloadAttr !== false) {
                      base.flash.insertPlayer();
                  }
                  // autoplay
-                 if (video.autoplay) {
+                 var autoplayAttr = $video.attr('autoplay');
+                 if (typeof autoplayAttr !== 'undefined' && autoplayAttr !== false) {
                      base.player.play();
                  }
                  
                  // TODO support for loop
-            }
-            else {
+            } else {
                 // fallback
                 return false;
             }

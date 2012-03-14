@@ -355,8 +355,7 @@ package {
 
             video.attachNetStream(stream);
             stream.play(videoURL);
-            paused = false;
-            setJSvar("paused", paused);
+            pause();
 
             vidTimer.start();
             vidTimer.addEventListener(TimerEvent.TIMER, updateTime);
