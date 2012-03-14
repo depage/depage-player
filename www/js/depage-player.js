@@ -177,7 +177,6 @@
         };
         // }}}
         
-        
         /**
          * Namespace HTML5 funcitons
          */
@@ -414,8 +413,8 @@
              * @return void
              */
             insertPlayer : function() {
-                
-                var url = $indicator[0].href;
+                // get absolute url from source attribute with mp4-type
+                var url = $("<a href=\"" + $('source:[type="video/mp4"]', video).attr("src") + "\"></a>")[0].toString()
                 
                 var flashParams = {
                     id : base.options.playerId
