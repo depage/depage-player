@@ -82,6 +82,8 @@
             base.options.height = base.options.height || base.$el.height();
             
             base.options.playerId = base.options.playerId + index;
+
+            $.depage.player.instances[base.options.playerId] = base;
         };
         // }}}
         
@@ -344,7 +346,7 @@
                 /**
                  * serialize
                  * 
-                 * Seriliazes the arguments passed to the flash player object
+                 * Serializes the arguments passed to the flash player object
                  * 
                  * @param string action - control action called
                  * @param array args - flash player arguments
@@ -457,28 +459,29 @@
              * @return void
              */
             setPlayerVar : function(playerId, action, value) {
+                var instance = $.depage.player.instances[playerId];
                 
-                base.player[action] = value;
+                instance.player[action] = value;
                 
                 switch (action) {
                     case "paused" : 
-                        if (base.player.paused){
-                            base.pause();
+                        if (instance.player.paused){
+                            instance.pause();
                         } else {
-                            base.play();
+                            instance.play();
                         }
                         break;
                         
                     case "currentTime" :
-                        base.setCurrentTime(base.player.currentTime);
+                        instance.setCurrentTime(base.player.currentTime);
                         break;
                         
                     case "percentLoaded" :
-                        base.percentLoaded(base.player.percentLoaded);
+                        instance.percentLoaded(base.player.percentLoaded);
                         break;
                         
                     case "duration" :
-                        base.duration();
+                        instance.duration();
                         break;
                 }
             }
@@ -583,7 +586,7 @@
             
             if (!$wrapper) {
                 $wrap.wrap('<div class="wrapper" />');
-                $wrapper = $('.wrapper'); // cache after dom append for IE < 9 ?!
+                $wrapper = $('.wrapper', base.el); // cache after dom append for IE < 9 ?!
             }
             
             if (!$.isEmptyObject(style)) {
@@ -920,6 +923,13 @@
         
         return base;
     };
+
+    /**
+     * instances
+     *
+     * Holds all player instances by id
+     */
+    $.depage.player.instances = [];
     
     /**
      * Options
