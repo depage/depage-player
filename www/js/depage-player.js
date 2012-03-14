@@ -417,7 +417,7 @@
                 var url = $indicator[0].href;
                 
                 var html = $.depage.flash().build({
-                    src    : base.options.playerPath,
+                    src    : base.options.assetPath + "depage_player.swf",
                     // TODO needs to fit screen for resize
                     //width  : base.options.width,
                     //height : base.options.height,
@@ -758,28 +758,28 @@
             
             var div = $("<div class=\"controls\"></div>");
             
-            base.controls.play = $("<a class=\"play\"><img src=\"" + base.options.scriptPath + "play_button" + imgSuffix + "\" alt=\"play\"></a>")
+            base.controls.play = $("<a class=\"play\"><img src=\"" + base.options.assetPath + "play_button" + imgSuffix + "\" alt=\"play\"></a>")
                 .appendTo(div)
                 .click(function() {
                     base.player.play();
                     return false;
                 });
             
-            base.controls.pause = $("<a class=\"pause\" style=\"display: none\"><img src=\"" + base.options.scriptPath + "pause_button" + imgSuffix + "\" alt=\"pause\"></a>")
+            base.controls.pause = $("<a class=\"pause\" style=\"display: none\"><img src=\"" + base.options.assetPath + "pause_button" + imgSuffix + "\" alt=\"pause\"></a>")
                 .appendTo(div)
                 .click(function() {
                     base.player.pause();
                     return false;
                 });
             
-            base.controls.rewind = $("<a class=\"rewind\"><img src=\"" + base.options.scriptPath + "rewind_button" + imgSuffix + "\" alt=\"rewind\"></a>")
+            base.controls.rewind = $("<a class=\"rewind\"><img src=\"" + base.options.assetPath + "rewind_button" + imgSuffix + "\" alt=\"rewind\"></a>")
                 .appendTo(div)
                 .click(function() {
                     base.player.seek(0.1); // setting to zero breaks iOS 3.2
                     return false;
                 });
             
-            base.controls.rewind = $("<a class=\"fullscreen\"><img src=\"" + base.options.scriptPath + "fullscreen_button" + imgSuffix + "\" alt=\"fullscreen\"></a>")
+            base.controls.rewind = $("<a class=\"fullscreen\"><img src=\"" + base.options.assetPath + "fullscreen_button" + imgSuffix + "\" alt=\"fullscreen\"></a>")
                 .appendTo(div)
                 .click(function() {
                     base.player.fullscreen();
@@ -919,7 +919,7 @@
     /**
      * Options
      * 
-     * @param playerPath - absolute path to player folder 
+     * @param assetPath - path to the asset-folder (with flash-player and images for buttons)
      * @param playerName - name of the flash swf
      * @param playerId
      * @param width - video width
@@ -928,8 +928,7 @@
      * @param constrain - constrain dimensions of this video when resizing
      */
     $.depage.player.defaultOptions = {
-        playerPath : window.location.href + "js/depage_player/depage_player.swf",
-        scriptPath : "js/depage_player/",
+        assetPath : $("script[src *= '/depage-player.js']")[0].src.match(/^.*\//).toString() + "depage_player/",
         playerId : "dpPlayer",
         width : false,
         height : false,
@@ -944,3 +943,4 @@
     };
     
 })(jQuery);
+/* vim:set ft=javascript sw=4 sts=4 fdm=marker : */
