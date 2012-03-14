@@ -1,0 +1,137 @@
+* {
+    margin: 0;
+}
+body {
+    font-size: 62.5%;
+    font-family: "Verdana","Arial", "Helvetica Neue", "Helvetica", Sans-Serif;
+    margin: 2em;
+}
+
+/* {{{ video */
+.video {
+    width: 64em;
+    height: 32.9em;
+    height: 32.9em;
+    position: relative;
+    margin-bottom: 6em;
+
+    div.wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+    img,
+    video,
+    object {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    .indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 999;
+        width: 100%;
+        height: 30em;
+        min-height: 100% !important;
+        background: url("../js/depage_player/play_indicator.png") center center no-repeat !important;
+        background: url("../js/depage_player/play_indicator.gif") center center no-repeat;
+    }
+    .controls {
+        position: relative;
+        line-height: 1.5em;
+        color: #666666;
+
+        img {
+            display: block;
+            width: 3em;
+            height: 3em;
+        }
+        .play,
+        .pause,
+        .rewind,
+        .fullscreen,
+        .time,
+        .legend {
+            display: block;
+            position: absolute;
+            top: 1em;
+            z-index: 998;
+        }
+        .play,
+        .pause,
+        .rewind,
+        .fullscreen {
+            cursor: pointer;
+        }
+        .play,
+        .pause {
+            left: 0;
+        }
+        .rewind {
+            left: 2.6em;
+        }
+
+        .fullscreen {
+            left: 5.2em;
+        }
+        .progress {
+            position: relative;
+            display: block;
+            height: 1em;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #dddddd;
+            cursor: pointer;
+            overflow: hidden;
+
+            span {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+            }
+            .position {
+                background: #666666;
+            }
+            .buffer {
+                background: #eeeeee;
+            }
+        }
+        .progress,
+        .buffer {
+            border-bottom-left-radius: 0.6em;
+            border-bottom-right-radius: 0.6em;
+            -webkit-border-bottom-left-radius: 0.6em;
+            -webkit-border-bottom-right-radius: 0.6em;
+            -moz-border-radius-bottomleft: 0.6em;
+            -moz-border-radius-bottomright: 0.6em;
+        }
+        .time,
+        .legend {
+            padding-top: 0.8em;
+        }
+        .time {
+            left: 8.0em;
+        }
+        .legend {
+            position: relative;
+            padding-left: 16em;
+            color: #000000;
+            top: 0;
+            padding-bottom: 1.5em;
+            z-index: 997;
+        }
+        .time span,
+        .legend span {
+            font-size: 1.1em;
+        }
+    }
+}
+
+/* }}} */
+
+/* vim:set ft=scss sw=4 sts=4 fdm=marker : */

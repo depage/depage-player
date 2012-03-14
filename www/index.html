@@ -23,14 +23,24 @@
     <!-- }}} -->
     <body>
         <!--  need dimensions for video cropping, absolute position allows fullscreen without scroll bars in FF -->
-        <div id="new" class="video" style="width: 640px; height: 360px; position: absolute">
+        <div id="new" class="video">
+            <a href="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
+            <video preload="preload" poster="http://sandbox.depage.net/depage-player/videos/testmovie2.png">
+                <source src="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4" type="video/mp4" />
+                <img alt="Dies ist der Videotitel" src="http://sandbox.depage.net/depage-player/videos/testmovie2.png" />
+            </video>
+            <p class="legend"><a href="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie entweder einen Browser mit Video Support oder den <a href="http://get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+        </div>
+        
+        <div id="new1" class="video">
             <a href="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4" data-video-duration="60" data-video-size="5.51MB" class="indicator"></a>
             <video poster="http://sandbox.depage.net/depage-player/videos/testmovie2.png">
                 <source src="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4" type="video/mp4" />
-                <img alt="Dies ist der Videotitel" src="http://sandbox.depage.net/depage-player/videos/testmovie2.png" width="640" height="360" />
+                <img alt="Dies ist der Videotitel" src="http://sandbox.depage.net/depage-player/videos/testmovie2.png" />
             </video>
             <p class="legend"><a href="http://sandbox.depage.net/depage-player/videos/big_buck_bunny.mp4">Videotitel mit Test &uuml;ber mehrere Zeilen, so dass das ganze zu lang wird.</a></p>
-            <p class="requirements">Um das Video abspielen zu können, benötigen Sie den <a href="http://get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
+            <p class="requirements">Um das Video abspielen zu können, benötigen Sie entweder einen Browser mit Video Support oder den <a href="http://get.adobe.com/flashplayer/">Flash Player 9,0,115,0 oder höher</a>. Sie können diesen <a href="get.adobe.com/flashplayer/">hier herunterladen.</a></p>
         </div>
         
         <br />

@@ -1,134 +1,133 @@
 * {
-    margin: 0;
-}
-body {
-    font-size: 62.5%;
-    font-family: "Verdana","Arial", "Helvetica Neue", "Helvetica", Sans-Serif;
-    margin: 2em;
+  margin: 0;
 }
 
-#info {
-    overflow-y: scroll;
-    height: 15em;
+body {
+  font-size: 62.5%;
+  font-family: "Verdana","Arial", "Helvetica Neue", "Helvetica", Sans-Serif;
+  margin: 2em;
 }
 
 /* {{{ video */
 .video {
-    width: 72em;
-    width: 48em;
-    position: relative;
+  width: 64em;
+  height: 32.9em;
+  height: 32.9em;
+  position: relative;
+  margin-bottom: 6em;
 }
 .video div.wrapper {
-    position: relative;
-    height: 100%;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 .video img,
+.video video,
 .video object {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-.video .controls {
-    position: relative;
-    line-height: 1.5em;
-    color: #666666;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 .video .indicator {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 999;
-    width: 100%;
-    height: 30em;
-    min-height: 100% !important;
-    background: url("../js/depage_player/play_indicator.png") center center no-repeat !important;
-    background: url("../js/depage_player/play_indicator.gif") center center no-repeat;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  width: 100%;
+  height: 30em;
+  min-height: 100% !important;
+  background: url("../js/depage_player/play_indicator.png") center center no-repeat !important;
+  background: url("../js/depage_player/play_indicator.gif") center center no-repeat;
+}
+.video .controls {
+  position: relative;
+  line-height: 1.5em;
+  color: #666666;
 }
 .video .controls img {
-    display: block;
-    width: 3em;
-    height: 3em;
+  display: block;
+  width: 3em;
+  height: 3em;
 }
 .video .controls .play,
 .video .controls .pause,
 .video .controls .rewind,
+.video .controls .fullscreen,
 .video .controls .time,
-.video .controls .legend,
-.video .controls .fullscreen{
-    display: block;
-    position: absolute;
-    top: 1em;
-    z-index: 998;
+.video .controls .legend {
+  display: block;
+  position: absolute;
+  top: 1em;
+  z-index: 998;
+}
+.video .controls .play,
+.video .controls .pause,
+.video .controls .rewind,
+.video .controls .fullscreen {
+  cursor: pointer;
 }
 .video .controls .play,
 .video .controls .pause {
-    left: 0;
+  left: 0;
 }
 .video .controls .rewind {
-    left: 2.6em;
+  left: 2.6em;
 }
-
 .video .controls .fullscreen {
-    left: 5.2em;
+  left: 5.2em;
 }
 .video .controls .progress {
-    position: relative;
-    display: block;
-    height: 1em;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: #dddddd;
-    cursor: pointer;
-    overflow: hidden;
+  position: relative;
+  display: block;
+  height: 1em;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #dddddd;
+  cursor: pointer;
+  overflow: hidden;
+}
+.video .controls .progress span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+.video .controls .progress .position {
+  background: #666666;
+}
+.video .controls .progress .buffer {
+  background: #eeeeee;
 }
 .video .controls .progress,
 .video .controls .buffer {
-    border-bottom-left-radius: 0.6em;
-    border-bottom-right-radius: 0.6em;
-    -webkit-border-bottom-left-radius: 0.6em;
-    -webkit-border-bottom-right-radius: 0.6em;
-    -moz-border-radius-bottomleft: 0.6em;
-    -moz-border-radius-bottomright: 0.6em;
-}
-.video .controls .progress span {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-}
-.video .controls .progress .position {
-    background: #666666;
-}
-.video .controls .progress .buffer {
-    background: #eeeeee;
+  border-bottom-left-radius: 0.6em;
+  border-bottom-right-radius: 0.6em;
+  -webkit-border-bottom-left-radius: 0.6em;
+  -webkit-border-bottom-right-radius: 0.6em;
+  -moz-border-radius-bottomleft: 0.6em;
+  -moz-border-radius-bottomright: 0.6em;
 }
 .video .controls .time,
 .video .controls .legend {
-    padding-top: 0.8em;
+  padding-top: 0.8em;
 }
 .video .controls .time {
-    left: 8.0em;
+  left: 8.0em;
 }
 .video .controls .legend {
-    position: relative;
-    padding-left: 16em;
-    color: #000000;
-    top: 0;
-    padding-bottom: 1.5em;
-    z-index: 997;
+  position: relative;
+  padding-left: 16em;
+  color: #000000;
+  top: 0;
+  padding-bottom: 1.5em;
+  z-index: 997;
 }
 .video .controls .time span,
 .video .controls .legend span {
-    font-size: 1.1em;
-}
-
-video {
-    width: 640px;
-    height: 360px;
+  font-size: 1.1em;
 }
 
 /* }}} */
-
-/* vim:set ft=css sw=4 sts=4 fdm=marker : */
+/* vim:set ft=scss sw=4 sts=4 fdm=marker : */
