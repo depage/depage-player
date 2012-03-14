@@ -41,6 +41,7 @@
      * @return context
      */
     $.depage.player = function(el, index, options){
+        // {{{ variables
         // To avoid scope issues, use 'base' instead of 'this' to reference this
         // class from internal events and functions.
         var base = this;
@@ -66,6 +67,7 @@
         
         // Cache the control selectors
         base.controls = {};
+        // }}}
         
         // {{{ init()
         /**
@@ -86,7 +88,6 @@
             $.depage.player.instances[base.options.playerId] = base;
         };
         // }}}
-        
         
         // {{{ videoSupport()
         /**
@@ -119,8 +120,7 @@
         };
         // }}}
         
-        
-        // {{{ video
+        // {{{ video()
         /**
          * Video
          * 
@@ -182,7 +182,7 @@
          * Namespace HTML5 funcitons
          */
         base.html5 = {
-            // {{ html5 setup
+            // {{{ html5 setup
             /**
              * HTML5 Setup the handlers for the HTML5 video
              * 
@@ -327,7 +327,6 @@
          * Namespace Flash Functions
          */
         base.flash = {
-            
             // flash.transport() {{{
             /**
              * Flash Transport
@@ -404,7 +403,6 @@
             },
             // }}}
             
-            
             // {{{ flash.insertPlayer()
             /**
              * Insert Flash Player
@@ -445,7 +443,6 @@
                 base.player.load(url);
             },
             // }}}
-            
             
             // {{{ setPlayerVar()
             /**
@@ -488,8 +485,7 @@
         };
         // }}}
         
-        
-        // {{{ resize
+        // {{{ resize()
         /**
          * Resize Player
          * 
@@ -552,8 +548,7 @@
         };
         // }}}
         
-        
-        // Overlay {{{
+        // {{{ Overlay()
         /**
          * Overlay
          * 
@@ -595,8 +590,7 @@
         };
         // }}}
         
-        
-        // {{{
+        // {{{ fullscreen()
         /**
          * Fullscreen
          * 
@@ -748,7 +742,6 @@
         };
         // }}}
         
-        
         // {{{ addControls()
         /**
          * Add Controls
@@ -854,8 +847,7 @@
         };
         // }}}
         
-        
-        // {{ setCurrentTime
+        // {{{ setCurrentTime()
         /**
          * Set Current Time
          * 
@@ -867,8 +859,7 @@
         };
         // }}}
         
-        
-        // {{{ percentLoaded
+        // {{{ percentLoaded()
         /**
          * Percent Loaded
          * 
@@ -882,8 +873,7 @@
         };
         // }}}
         
-        
-        // {{{ duration ()
+        // {{{ duration()
         /**
          * Duration 
          * 
@@ -894,7 +884,6 @@
             base.controls.duration.html(base.floatToTime(duration));
         };
         // }}}
-        
         
         // {{{ floatToTime() 
         /**
