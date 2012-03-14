@@ -416,6 +416,12 @@
                 
                 var url = $indicator[0].href;
                 
+                var flashParams = {
+                    id : base.options.playerId
+                };
+                if (window.console && base.options.debug) {
+                    flashParams.debug = "true";
+                }
                 var html = $.depage.flash().build({
                     src    : base.options.assetPath + "depage_player.swf",
                     // TODO needs to fit screen for resize
@@ -423,9 +429,7 @@
                     //height : base.options.height,
                     id     : base.options.playerId,
                     wmode  : 'transparent',
-                    params : {
-                        id : base.options.playerId
-                    }
+                    params : flashParams
                 });
                 
                 // use innerHTML for IE < 9 otherwise player breaks!!
@@ -926,6 +930,7 @@
      * @param height - video height
      * @param crop - crop this video when resizing
      * @param constrain - constrain dimensions of this video when resizing
+     * @param debug - if set, the flash player will send console.log messages for his actions
      */
     $.depage.player.defaultOptions = {
         assetPath : $("script[src *= '/depage-player.js']")[0].src.match(/^.*\//).toString() + "depage_player/",
@@ -933,7 +938,8 @@
         width : false,
         height : false,
         crop: true,
-        constrain: true
+        constrain: true,
+        debug: false
     };
     
     $.fn.depage_player = function(param1, options){
